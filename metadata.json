@@ -1,0 +1,6 @@
+{
+  "name": "WorkDesk",
+  "description": "Premium B2B SaaS for multi-tenant employee productivity, task assignments, performance analytics, and client communication logs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

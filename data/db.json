@@ -1,0 +1,1015 @@
+{
+  "companies": [
+    {
+      "id": "co_aether",
+      "name": "Aether Dynamics",
+      "domain": "aether.com",
+      "createdAt": "2026-01-10T08:00:00.000Z"
+    },
+    {
+      "id": "co_zenith",
+      "name": "Zenith Solutions",
+      "domain": "zenith.com",
+      "createdAt": "2026-02-15T09:30:00.000Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "usr_ae_admin",
+      "name": "Elena Rostova",
+      "email": "admin@aether.com",
+      "role": "ADMIN",
+      "department": "Operations",
+      "companyId": "co_aether",
+      "phone": "+1 (555) 0192",
+      "createdAt": "2026-01-11T10:00:00.000Z",
+      "passwordHash": "$2b$10$iU5LATbdCE3Z/IQEDTJxAuQt7hhu7gySpLQthKi/7PfFclit9epcS"
+    },
+    {
+      "id": "usr_ae_leader",
+      "name": "Marcus Vance",
+      "email": "leader@aether.com",
+      "role": "TEAM_LEADER",
+      "department": "Engineering",
+      "companyId": "co_aether",
+      "phone": "+1 (555) 0183",
+      "createdAt": "2026-01-12T09:15:00.000Z",
+      "passwordHash": "$2b$10$iU5LATbdCE3Z/IQEDTJxAuzDjwn7WXSOsXdGXuUMmjgCzYDVl4fOO"
+    },
+    {
+      "id": "usr_ae_emp1",
+      "name": "Sarah Chen",
+      "email": "emp1@aether.com",
+      "role": "EMPLOYEE",
+      "department": "Engineering",
+      "companyId": "co_aether",
+      "phone": "+1 (555) 0144",
+      "createdAt": "2026-01-15T11:00:00.000Z",
+      "passwordHash": "$2b$10$iU5LATbdCE3Z/IQEDTJxAupUgRWcw2KV74MF3S1Bqk3H9X00jeJkC"
+    },
+    {
+      "id": "usr_ae_emp2",
+      "name": "Devon Miller",
+      "email": "emp2@aether.com",
+      "role": "EMPLOYEE",
+      "department": "Marketing & Sales",
+      "companyId": "co_aether",
+      "phone": "+1 (555) 0210",
+      "createdAt": "2026-01-18T10:30:00.000Z",
+      "passwordHash": "$2b$10$iU5LATbdCE3Z/IQEDTJxAupUgRWcw2KV74MF3S1Bqk3H9X00jeJkC",
+      "isSuspended": false
+    },
+    {
+      "id": "usr_ze_admin",
+      "name": "Liam Sterling",
+      "email": "admin@zenith.com",
+      "role": "ADMIN",
+      "department": "Executive Office",
+      "companyId": "co_zenith",
+      "phone": "+44 20 7946 0958",
+      "createdAt": "2026-02-16T10:00:00.000Z",
+      "passwordHash": "$2b$10$iU5LATbdCE3Z/IQEDTJxAuQt7hhu7gySpLQthKi/7PfFclit9epcS"
+    },
+    {
+      "id": "usr_ze_leader",
+      "name": "Sophia Dubois",
+      "email": "leader@zenith.com",
+      "role": "TEAM_LEADER",
+      "department": "Product Strategy",
+      "companyId": "co_zenith",
+      "phone": "+44 20 7946 0113",
+      "createdAt": "2026-02-18T09:00:00.000Z",
+      "passwordHash": "$2b$10$iU5LATbdCE3Z/IQEDTJxAuzDjwn7WXSOsXdGXuUMmjgCzYDVl4fOO"
+    },
+    {
+      "id": "usr_ze_emp1",
+      "name": "Nikhil Rao",
+      "email": "emp1@zenith.com",
+      "role": "EMPLOYEE",
+      "department": "Product Strategy",
+      "companyId": "co_zenith",
+      "phone": "+44 20 7946 0233",
+      "createdAt": "2026-02-20T11:45:00.000Z",
+      "passwordHash": "$2b$10$iU5LATbdCE3Z/IQEDTJxAupUgRWcw2KV74MF3S1Bqk3H9X00jeJkC"
+    }
+  ],
+  "teams": [
+    {
+      "id": "team_ae_eng",
+      "name": "Core Platform Engineering",
+      "companyId": "co_aether",
+      "leaderId": "usr_ae_leader",
+      "department": "Engineering",
+      "employeeIds": [
+        "usr_ae_emp1"
+      ],
+      "createdAt": "2026-01-15T14:00:00.000Z"
+    },
+    {
+      "id": "team_ze_prod",
+      "name": "SaaS Excellence Unit",
+      "companyId": "co_zenith",
+      "leaderId": "usr_ze_leader",
+      "department": "Product Strategy",
+      "employeeIds": [
+        "usr_ze_emp1"
+      ],
+      "createdAt": "2026-02-22T08:30:00.000Z"
+    },
+    {
+      "id": "team_233571",
+      "name": "MVP Quality Assurance Taskforce",
+      "companyId": "co_aether",
+      "leaderId": "usr_ae_leader",
+      "department": "Engineering",
+      "employeeIds": [
+        "usr_ae_emp1"
+      ],
+      "createdAt": "2026-05-23T06:20:33.571Z"
+    },
+    {
+      "id": "team_270840",
+      "name": "MVP Quality Assurance Taskforce",
+      "companyId": "co_aether",
+      "leaderId": "usr_ae_leader",
+      "department": "Engineering",
+      "employeeIds": [
+        "usr_ae_emp1"
+      ],
+      "createdAt": "2026-05-23T06:21:10.840Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "tsk_ae_1",
+      "companyId": "co_aether",
+      "title": "Optimize Core DB Query Plannings",
+      "description": "The response time of the task analytical dashboard degrades when records exceed 10,000. Rewrite heavy raw joins and set indices over foreign reference keys. Record performance results inside comments with metrics logs.",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_leader",
+      "deadline": "2026-06-15T17:00:00.000Z",
+      "priority": "CRITICAL",
+      "status": "IN_PROGRESS",
+      "progress": 60,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "query-planning-explain.txt",
+          "url": "#",
+          "uploadedBy": "Elena Rostova",
+          "uploadedAt": "2026-05-18T14:32:00.000Z",
+          "size": "15 KB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_ae_1",
+          "taskId": "tsk_ae_1",
+          "commenterId": "usr_ae_leader",
+          "commenterName": "Marcus Vance",
+          "commenterRole": "TEAM_LEADER",
+          "content": "Awesome. Added indexing strategies. Make sure to profile matching queries properly Sarah.",
+          "createdAt": "2026-05-19T09:30:00.000Z"
+        },
+        {
+          "id": "cmt_ae_2",
+          "taskId": "tsk_ae_1",
+          "commenterId": "usr_ae_emp1",
+          "commenterName": "Sarah Chen",
+          "commenterRole": "EMPLOYEE",
+          "content": "Completed stage 1 profiling. Query latency dropped from 850ms to 42ms for standard tenants.",
+          "createdAt": "2026-05-20T15:20:00.000Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_ae1_1",
+          "userId": "usr_ae_leader",
+          "userName": "Marcus Vance",
+          "action": "Created task and assigned to Sarah Chen",
+          "timestamp": "2026-05-18T09:00:00.000Z"
+        },
+        {
+          "id": "act_ae1_2",
+          "userId": "usr_ae_emp1",
+          "userName": "Sarah Chen",
+          "action": "Updated status to IN_PROGRESS and bumped progress to 60%",
+          "timestamp": "2026-05-20T15:21:00.000Z"
+        }
+      ],
+      "createdAt": "2026-05-18T09:00:00.000Z"
+    },
+    {
+      "id": "tsk_ae_2",
+      "companyId": "co_aether",
+      "title": "Revamp SaaS Marketing Funnel Collateral",
+      "description": "Reorganize our corporate decks and draft engaging B2B outbound campaign copy. This needs tight alignment with our brand guidelines to boost enterprise lead acquisitions.",
+      "assignedTo": "usr_ae_emp2",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-06-01T18:00:00.000Z",
+      "priority": "HIGH",
+      "status": "PENDING",
+      "progress": 0,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [],
+      "comments": [],
+      "activityLogs": [
+        {
+          "id": "act_ae2_1",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Created task and assigned to Devon Miller",
+          "timestamp": "2026-05-20T10:00:00.000Z"
+        }
+      ],
+      "createdAt": "2026-05-20T10:00:00.000Z"
+    },
+    {
+      "id": "tsk_ae_3",
+      "companyId": "co_aether",
+      "title": "Complete Soc2 Compliance Attestation Audit",
+      "description": "Collect configuration evidence for key encryption routines, multi-factor enablement audit trails, and data isolation mechanisms across standard server routines.",
+      "assignedTo": "usr_ae_leader",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-05-28T17:00:00.000Z",
+      "priority": "CRITICAL",
+      "status": "REVIEW",
+      "progress": 95,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "soc2-readiness-evidence-v1.zip",
+          "url": "#",
+          "uploadedBy": "Marcus Vance",
+          "uploadedAt": "2026-05-21T08:00:00.000Z",
+          "size": "2.4 MB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_ae_3",
+          "taskId": "tsk_ae_3",
+          "commenterId": "usr_ae_leader",
+          "commenterName": "Marcus Vance",
+          "commenterRole": "TEAM_LEADER",
+          "content": "All SOC2 security requirements are documented and zipped. Ready for your executive sign-off Elena.",
+          "createdAt": "2026-05-21T08:05:00.000Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_ae3_1",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Assigned audit assignment to Marcus",
+          "timestamp": "2026-05-15T10:00:00.000Z"
+        },
+        {
+          "id": "act_ae3_2",
+          "userId": "usr_ae_leader",
+          "userName": "Marcus Vance",
+          "action": "Set status to REVIEW and added SOC2 evidence archive attachment",
+          "timestamp": "2026-05-21T08:05:00.000Z"
+        }
+      ],
+      "createdAt": "2026-05-15T10:00:00.000Z"
+    },
+    {
+      "id": "tsk_ae_4",
+      "companyId": "co_aether",
+      "title": "Weekly Multi-Tenant DB Integrity Verification",
+      "description": "Automated recurring health check to scan partition scopes, indices sizes, and verify there is no data schema drift or multi-tenant ID cross leakage.",
+      "assignedTo": "usr_ae_leader",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-05-23T12:00:00.000Z",
+      "priority": "MEDIUM",
+      "status": "COMPLETED",
+      "progress": 100,
+      "recurringType": "WEEKLY",
+      "isFutureScheduled": false,
+      "attachments": [],
+      "comments": [],
+      "activityLogs": [
+        {
+          "id": "act_ae4_1",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Configured recurring job. Run verified successfully.",
+          "timestamp": "2026-05-16T12:00:00.000Z"
+        }
+      ],
+      "createdAt": "2026-05-16T12:00:00.000Z"
+    },
+    {
+      "id": "tsk_ae_5",
+      "companyId": "co_aether",
+      "title": "Migrate Outdated Webpack Bundles to Vite",
+      "description": "Historical front-end migration containing legacy vendor files. This task represents our technical improvements goals.",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_leader",
+      "deadline": "2026-05-10T17:00:00.000Z",
+      "priority": "LOW",
+      "status": "OVERDUE",
+      "progress": 35,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [],
+      "comments": [
+        {
+          "id": "cmt_ae_5",
+          "taskId": "tsk_ae_5",
+          "commenterId": "usr_ae_emp1",
+          "commenterName": "Sarah Chen",
+          "commenterRole": "EMPLOYEE",
+          "content": "Ran into compatibility issues with third-party charting libraries. Will resume after DB index work handles latency.",
+          "createdAt": "2026-05-09T14:00:00.000Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_ae5_1",
+          "userId": "usr_ae_leader",
+          "userName": "Marcus Vance",
+          "action": "Created fallback migration",
+          "timestamp": "2026-05-01T09:00:00.000Z"
+        }
+      ],
+      "createdAt": "2026-05-01T09:00:00.000Z"
+    },
+    {
+      "id": "tsk_ze_1",
+      "companyId": "co_zenith",
+      "title": "Client Experience Mapping Strategy",
+      "description": "Conduct comprehensive journey maps for our onboarding trial group. Create client segments, logs, and schedule sync discussions.",
+      "assignedTo": "usr_ze_emp1",
+      "createdBy": "usr_ze_leader",
+      "deadline": "2026-06-10T18:00:00.000Z",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "progress": 40,
+      "recurringType": "NONE",
+      "attachments": [],
+      "comments": [],
+      "activityLogs": [
+        {
+          "id": "act_ze1_1",
+          "userId": "usr_ze_leader",
+          "userName": "Sophia Dubois",
+          "action": "Created task and assigned to Nikhil Rao",
+          "timestamp": "2026-05-19T10:00:00.000Z"
+        }
+      ],
+      "createdAt": "2026-05-19T10:00:00.000Z"
+    },
+    {
+      "id": "tsk_233541",
+      "companyId": "co_aether",
+      "title": "Conduct System Performance Optimization MVP",
+      "description": "Verify end-to-end telemetry and ensure node resolves native DOMExceptions",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-06-15",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "progress": 40,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "mvp_verification_report_2026.pdf",
+          "url": "https://ais-pre-yxyhfkk7xwnqoui2jgpots-389822732223.asia-east1.run.app/dev-attachment/mvp_verification_report_2026.pdf",
+          "uploadedBy": "Elena Rostova",
+          "uploadedAt": "2026-05-23T06:20:33.561Z",
+          "size": "1.2 MB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_233561",
+          "taskId": "tsk_233541",
+          "commenterId": "usr_ae_admin",
+          "commenterName": "Elena Rostova",
+          "commenterRole": "ADMIN",
+          "content": "Verified node-domexception shimming works",
+          "createdAt": "2026-05-23T06:20:33.561Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_1779517233541_0",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Task created and assigned to Sarah Chen",
+          "timestamp": "2026-05-23T06:20:33.541Z"
+        },
+        {
+          "id": "act_233561_gzp",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Status updated from [PENDING] to [IN_PROGRESS]",
+          "timestamp": "2026-05-23T06:20:33.561Z"
+        }
+      ],
+      "createdAt": "2026-05-23T06:20:33.541Z"
+    },
+    {
+      "id": "tsk_270825",
+      "companyId": "co_aether",
+      "title": "Conduct System Performance Optimization MVP",
+      "description": "Verify end-to-end telemetry and ensure node resolves native DOMExceptions",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-06-15",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "progress": 40,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "mvp_verification_report_2026.pdf",
+          "url": "https://ais-pre-yxyhfkk7xwnqoui2jgpots-389822732223.asia-east1.run.app/dev-attachment/mvp_verification_report_2026.pdf",
+          "uploadedBy": "Elena Rostova",
+          "uploadedAt": "2026-05-23T06:21:10.832Z",
+          "size": "1.2 MB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_270832",
+          "taskId": "tsk_270825",
+          "commenterId": "usr_ae_admin",
+          "commenterName": "Elena Rostova",
+          "commenterRole": "ADMIN",
+          "content": "Verified node-domexception shimming works",
+          "createdAt": "2026-05-23T06:21:10.832Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_1779517270825_0",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Task created and assigned to Sarah Chen",
+          "timestamp": "2026-05-23T06:21:10.825Z"
+        },
+        {
+          "id": "act_270832_6ca",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Status updated from [PENDING] to [IN_PROGRESS]",
+          "timestamp": "2026-05-23T06:21:10.832Z"
+        }
+      ],
+      "createdAt": "2026-05-23T06:21:10.825Z"
+    },
+    {
+      "id": "tsk_364274",
+      "companyId": "co_aether",
+      "title": "Formulate Q3 Mission Statement Deliverables",
+      "description": "Verify cross-departmental operations sync and generate visual chart metrics.",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-09-30",
+      "priority": "CRITICAL",
+      "status": "REVIEW",
+      "progress": 90,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "q3-corporate-objective-v1.pdf",
+          "url": "https://ais-pre-yxyhfkk7xwnqoui2jgpots-389822732223.asia-east1.run.app/files/q3-corporate-objective-v1.pdf",
+          "uploadedBy": "Sarah Chen",
+          "uploadedAt": "2026-05-23T06:22:44.389Z",
+          "size": "850 KB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_364388",
+          "taskId": "tsk_364274",
+          "commenterId": "usr_ae_emp1",
+          "commenterName": "Sarah Chen",
+          "commenterRole": "EMPLOYEE",
+          "content": "Q3 Framework mapping completed. Attached full PDF outline.",
+          "createdAt": "2026-05-23T06:22:44.389Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_1779517364274_0",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Task created and assigned to Sarah Chen",
+          "timestamp": "2026-05-23T06:22:44.274Z"
+        },
+        {
+          "id": "act_364389_320",
+          "userId": "usr_ae_emp1",
+          "userName": "Sarah Chen",
+          "action": "Status updated from [PENDING] to [REVIEW]",
+          "timestamp": "2026-05-23T06:22:44.389Z"
+        }
+      ],
+      "createdAt": "2026-05-23T06:22:44.274Z"
+    },
+    {
+      "id": "tsk_421183",
+      "companyId": "co_aether",
+      "title": "Formulate Q3 Mission Statement Deliverables",
+      "description": "Verify cross-departmental operations sync and generate visual chart metrics.",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-09-30",
+      "priority": "CRITICAL",
+      "status": "REVIEW",
+      "progress": 90,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "q3-corporate-objective-v1.pdf",
+          "url": "https://ais-pre-yxyhfkk7xwnqoui2jgpots-389822732223.asia-east1.run.app/files/q3-corporate-objective-v1.pdf",
+          "uploadedBy": "Sarah Chen",
+          "uploadedAt": "2026-05-23T06:23:41.301Z",
+          "size": "850 KB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_421301",
+          "taskId": "tsk_421183",
+          "commenterId": "usr_ae_emp1",
+          "commenterName": "Sarah Chen",
+          "commenterRole": "EMPLOYEE",
+          "content": "Q3 Framework mapping completed. Attached full PDF outline.",
+          "createdAt": "2026-05-23T06:23:41.301Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_1779517421183_0",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Task created and assigned to Sarah Chen",
+          "timestamp": "2026-05-23T06:23:41.183Z"
+        },
+        {
+          "id": "act_421301_wdp",
+          "userId": "usr_ae_emp1",
+          "userName": "Sarah Chen",
+          "action": "Status updated from [PENDING] to [REVIEW]",
+          "timestamp": "2026-05-23T06:23:41.301Z"
+        }
+      ],
+      "createdAt": "2026-05-23T06:23:41.183Z"
+    },
+    {
+      "id": "tsk_721103",
+      "companyId": "co_aether",
+      "title": "Formulate Q3 Mission Statement Deliverables",
+      "description": "Verify cross-departmental operations sync and generate visual chart metrics.",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-09-30",
+      "priority": "CRITICAL",
+      "status": "REVIEW",
+      "progress": 90,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "q3-corporate-objective-v1.pdf",
+          "url": "https://ais-pre-yxyhfkk7xwnqoui2jgpots-389822732223.asia-east1.run.app/files/q3-corporate-objective-v1.pdf",
+          "uploadedBy": "Sarah Chen",
+          "uploadedAt": "2026-05-23T06:45:21.226Z",
+          "size": "850 KB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_721226",
+          "taskId": "tsk_721103",
+          "commenterId": "usr_ae_emp1",
+          "commenterName": "Sarah Chen",
+          "commenterRole": "EMPLOYEE",
+          "content": "Q3 Framework mapping completed. Attached full PDF outline.",
+          "createdAt": "2026-05-23T06:45:21.226Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_1779518721103_0",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Task created and assigned to Sarah Chen",
+          "timestamp": "2026-05-23T06:45:21.103Z"
+        },
+        {
+          "id": "act_721227_qvy",
+          "userId": "usr_ae_emp1",
+          "userName": "Sarah Chen",
+          "action": "Status updated from [PENDING] to [REVIEW]",
+          "timestamp": "2026-05-23T06:45:21.227Z"
+        }
+      ],
+      "createdAt": "2026-05-23T06:45:21.103Z"
+    },
+    {
+      "id": "tsk_789533",
+      "companyId": "co_aether",
+      "title": "Formulate Q3 Mission Statement Deliverables",
+      "description": "Verify cross-departmental operations sync and generate visual chart metrics.",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-09-30",
+      "priority": "CRITICAL",
+      "status": "REVIEW",
+      "progress": 90,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "q3-corporate-objective-v1.pdf",
+          "url": "https://ais-pre-yxyhfkk7xwnqoui2jgpots-389822732223.asia-east1.run.app/files/q3-corporate-objective-v1.pdf",
+          "uploadedBy": "Sarah Chen",
+          "uploadedAt": "2026-06-01T08:49:49.668Z",
+          "size": "850 KB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_789668",
+          "taskId": "tsk_789533",
+          "commenterId": "usr_ae_emp1",
+          "commenterName": "Sarah Chen",
+          "commenterRole": "EMPLOYEE",
+          "content": "Q3 Framework mapping completed. Attached full PDF outline.",
+          "createdAt": "2026-06-01T08:49:49.668Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_1780303789533_0",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Task created and assigned to Sarah Chen",
+          "timestamp": "2026-06-01T08:49:49.533Z"
+        },
+        {
+          "id": "act_789669_s9h",
+          "userId": "usr_ae_emp1",
+          "userName": "Sarah Chen",
+          "action": "Status updated from [PENDING] to [REVIEW]",
+          "timestamp": "2026-06-01T08:49:49.669Z"
+        }
+      ],
+      "createdAt": "2026-06-01T08:49:49.533Z"
+    },
+    {
+      "id": "tsk_875450",
+      "companyId": "co_aether",
+      "title": "Formulate Q3 Mission Statement Deliverables",
+      "description": "Verify cross-departmental operations sync and generate visual chart metrics.",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-09-30",
+      "priority": "CRITICAL",
+      "status": "REVIEW",
+      "progress": 90,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "q3-corporate-objective-v1.pdf",
+          "url": "https://ais-pre-yxyhfkk7xwnqoui2jgpots-389822732223.asia-east1.run.app/files/q3-corporate-objective-v1.pdf",
+          "uploadedBy": "Sarah Chen",
+          "uploadedAt": "2026-06-01T08:51:15.566Z",
+          "size": "850 KB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_875566",
+          "taskId": "tsk_875450",
+          "commenterId": "usr_ae_emp1",
+          "commenterName": "Sarah Chen",
+          "commenterRole": "EMPLOYEE",
+          "content": "Q3 Framework mapping completed. Attached full PDF outline.",
+          "createdAt": "2026-06-01T08:51:15.566Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_1780303875450_0",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Task created and assigned to Sarah Chen",
+          "timestamp": "2026-06-01T08:51:15.450Z"
+        },
+        {
+          "id": "act_875566_w3o",
+          "userId": "usr_ae_emp1",
+          "userName": "Sarah Chen",
+          "action": "Status updated from [PENDING] to [REVIEW]",
+          "timestamp": "2026-06-01T08:51:15.566Z"
+        }
+      ],
+      "createdAt": "2026-06-01T08:51:15.450Z"
+    }
+  ],
+  "performanceScores": [
+    {
+      "id": "perf_ae_emp1",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "monthYear": "05/2026",
+      "taskCompletionRate": 94,
+      "deadlineAdherence": 90,
+      "productivityScore": 92,
+      "responseTime": 1.5,
+      "attendanceConsistency": 98,
+      "updatedAt": "2026-05-23T06:01:51.263Z"
+    },
+    {
+      "id": "perf_ae_emp2",
+      "userId": "usr_ae_emp2",
+      "companyId": "co_aether",
+      "monthYear": "05/2026",
+      "taskCompletionRate": 82,
+      "deadlineAdherence": 85,
+      "productivityScore": 78,
+      "responseTime": 3.2,
+      "attendanceConsistency": 92,
+      "updatedAt": "2026-05-23T06:01:51.263Z"
+    },
+    {
+      "id": "perf_ae_leader",
+      "userId": "usr_ae_leader",
+      "companyId": "co_aether",
+      "monthYear": "05/2026",
+      "taskCompletionRate": 98,
+      "deadlineAdherence": 100,
+      "productivityScore": 96,
+      "responseTime": 0.8,
+      "attendanceConsistency": 100,
+      "updatedAt": "2026-05-23T06:01:51.263Z"
+    },
+    {
+      "id": "perf_ze_emp1",
+      "userId": "usr_ze_emp1",
+      "companyId": "co_zenith",
+      "monthYear": "05/2026",
+      "taskCompletionRate": 88,
+      "deadlineAdherence": 82,
+      "productivityScore": 84,
+      "responseTime": 2.1,
+      "attendanceConsistency": 95,
+      "updatedAt": "2026-05-23T06:01:51.263Z"
+    }
+  ],
+  "clients": [
+    {
+      "id": "cli_ae_1",
+      "companyId": "co_aether",
+      "name": "Apex Global Enterprises",
+      "email": "contact@apexglobal.com",
+      "phone": "+1 (555) 0846",
+      "industry": "Aerospace Systems",
+      "notes": "Strategic tier-1 client. Very strict on SOC2 parameters and response guarantees.",
+      "createdAt": "2026-02-01T09:00:00.000Z"
+    },
+    {
+      "id": "cli_ae_2",
+      "companyId": "co_aether",
+      "name": "Vortex Analytics Corp",
+      "email": "partners@vortex.io",
+      "phone": "+1 (555) 0911",
+      "industry": "Logistics Software",
+      "notes": "Bimonthly product briefings required. Extremely active on engineering dashboards integration.",
+      "createdAt": "2026-03-05T10:30:00.000Z"
+    },
+    {
+      "id": "cli_ze_1",
+      "companyId": "co_zenith",
+      "name": "Hyperion Holdings",
+      "email": "hq@hyperion.com",
+      "phone": "+44 20 7946 0885",
+      "industry": "Investment and VC",
+      "notes": "Portfolio managers seeking dashboard oversight integrations.",
+      "createdAt": "2026-03-10T11:00:00.000Z"
+    }
+  ],
+  "communicationLogs": [
+    {
+      "id": "log_ae_1",
+      "clientId": "cli_ae_1",
+      "clientName": "Apex Global Enterprises",
+      "companyId": "co_aether",
+      "loggedById": "usr_ae_admin",
+      "loggedByName": "Elena Rostova",
+      "mode": "MEETING",
+      "notes": "Discussed task planning timelines for our Soc2 compliance evidence reports. Apex verified readiness, and was highly enthusiastic about WorkDesk transparency rules.",
+      "createdAt": "2026-05-18T16:00:00.000Z"
+    },
+    {
+      "id": "log_ae_2",
+      "clientId": "cli_ae_1",
+      "clientName": "Apex Global Enterprises",
+      "companyId": "co_aether",
+      "loggedById": "usr_ae_leader",
+      "loggedByName": "Marcus Vance",
+      "mode": "CALL",
+      "notes": "Reviewed custom indices metrics details and system availability charts. Client asked for monthly infrastructure summaries going forward.",
+      "createdAt": "2026-05-20T11:30:00.000Z"
+    },
+    {
+      "id": "log_ae_3",
+      "clientId": "cli_ae_2",
+      "clientName": "Vortex Analytics Corp",
+      "companyId": "co_aether",
+      "loggedById": "usr_ae_admin",
+      "loggedByName": "Elena Rostova",
+      "mode": "EMAIL",
+      "notes": "Pushed welcome onboarding templates. Configured custom department queues for their incoming team leadership leads.",
+      "createdAt": "2026-05-12T09:12:00.000Z"
+    },
+    {
+      "id": "log_ze_1",
+      "clientId": "cli_ze_1",
+      "clientName": "Hyperion Holdings",
+      "companyId": "co_zenith",
+      "loggedById": "usr_ze_leader",
+      "loggedByName": "Sophia Dubois",
+      "mode": "CALL",
+      "notes": "Kick-off phone discussion for product consulting mappings. Agreed to standard biweekly deliverables.",
+      "createdAt": "2026-05-20T14:00:00.000Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "not_ae_1",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "Critical Task Assigned: Optimize DB Latency",
+      "message": "You have been assigned the DB Optimization task by Marcus Vance. Deadline June 15.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-05-18T09:01:00.000Z"
+    },
+    {
+      "id": "not_ae_2",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "Task Overdue Reminder",
+      "message": "Task: Migrate Outdated Webpack Bundles is currently marked overdue. Please update state comments.",
+      "isRead": true,
+      "type": "TASK_OVERDUE",
+      "createdAt": "2026-05-11T09:00:00.000Z"
+    },
+    {
+      "id": "not_ae_3",
+      "userId": "usr_ae_emp2",
+      "companyId": "co_aether",
+      "title": "Action Required: High Priority Assignment",
+      "message": "Elena Rostova assigned you to Revamp SaaS Marketing Collaterals.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-05-20T10:01:00.000Z"
+    },
+    {
+      "id": "not_ae_4",
+      "userId": "usr_ae_admin",
+      "companyId": "co_aether",
+      "title": "System Initialized",
+      "message": "Welcome to WorkDesk, Elena. Multi-tenant secure structures and encryption parameters are initialized.",
+      "isRead": false,
+      "type": "WELCOME",
+      "createdAt": "2026-05-10T08:00:00.000Z"
+    },
+    {
+      "id": "not_233541",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "New Task Assigned: Conduct System Performance Optimization MVP",
+      "message": "You have been assigned \"Conduct System Performance Optimization MVP\" by Elena Rostova. Finish target deadline is 6/15/2026.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-05-23T06:20:33.554Z"
+    },
+    {
+      "id": "not_270826",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "New Task Assigned: Conduct System Performance Optimization MVP",
+      "message": "You have been assigned \"Conduct System Performance Optimization MVP\" by Elena Rostova. Finish target deadline is 6/15/2026.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-05-23T06:21:10.826Z"
+    },
+    {
+      "id": "not_364274",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "New Task Assigned: Formulate Q3 Mission Statement Deliverables",
+      "message": "You have been assigned \"Formulate Q3 Mission Statement Deliverables\" by Elena Rostova. Finish target deadline is 9/30/2026.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-05-23T06:22:44.274Z"
+    },
+    {
+      "id": "not_364389",
+      "userId": "usr_ae_admin",
+      "companyId": "co_aether",
+      "title": "Task Status Alert: Formulate Q3 Mission Statement Deliverables",
+      "message": "Sarah Chen updated \"Formulate Q3 Mission Statement Deliverables\" to REVIEW.",
+      "isRead": false,
+      "type": "SYSTEM",
+      "createdAt": "2026-05-23T06:22:44.389Z"
+    },
+    {
+      "id": "not_421183",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "New Task Assigned: Formulate Q3 Mission Statement Deliverables",
+      "message": "You have been assigned \"Formulate Q3 Mission Statement Deliverables\" by Elena Rostova. Finish target deadline is 9/30/2026.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-05-23T06:23:41.183Z"
+    },
+    {
+      "id": "not_421301",
+      "userId": "usr_ae_admin",
+      "companyId": "co_aether",
+      "title": "Task Status Alert: Formulate Q3 Mission Statement Deliverables",
+      "message": "Sarah Chen updated \"Formulate Q3 Mission Statement Deliverables\" to REVIEW.",
+      "isRead": false,
+      "type": "SYSTEM",
+      "createdAt": "2026-05-23T06:23:41.301Z"
+    },
+    {
+      "id": "not_721103",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "New Task Assigned: Formulate Q3 Mission Statement Deliverables",
+      "message": "You have been assigned \"Formulate Q3 Mission Statement Deliverables\" by Elena Rostova. Finish target deadline is 9/30/2026.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-05-23T06:45:21.104Z"
+    },
+    {
+      "id": "not_721226",
+      "userId": "usr_ae_admin",
+      "companyId": "co_aether",
+      "title": "Task Status Alert: Formulate Q3 Mission Statement Deliverables",
+      "message": "Sarah Chen updated \"Formulate Q3 Mission Statement Deliverables\" to REVIEW.",
+      "isRead": false,
+      "type": "SYSTEM",
+      "createdAt": "2026-05-23T06:45:21.226Z"
+    },
+    {
+      "id": "not_789533",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "New Task Assigned: Formulate Q3 Mission Statement Deliverables",
+      "message": "You have been assigned \"Formulate Q3 Mission Statement Deliverables\" by Elena Rostova. Finish target deadline is 9/30/2026.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-06-01T08:49:49.551Z"
+    },
+    {
+      "id": "not_789668",
+      "userId": "usr_ae_admin",
+      "companyId": "co_aether",
+      "title": "Task Status Alert: Formulate Q3 Mission Statement Deliverables",
+      "message": "Sarah Chen updated \"Formulate Q3 Mission Statement Deliverables\" to REVIEW.",
+      "isRead": false,
+      "type": "SYSTEM",
+      "createdAt": "2026-06-01T08:49:49.668Z"
+    },
+    {
+      "id": "not_875451",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "New Task Assigned: Formulate Q3 Mission Statement Deliverables",
+      "message": "You have been assigned \"Formulate Q3 Mission Statement Deliverables\" by Elena Rostova. Finish target deadline is 9/30/2026.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-06-01T08:51:15.451Z"
+    },
+    {
+      "id": "not_875566",
+      "userId": "usr_ae_admin",
+      "companyId": "co_aether",
+      "title": "Task Status Alert: Formulate Q3 Mission Statement Deliverables",
+      "message": "Sarah Chen updated \"Formulate Q3 Mission Statement Deliverables\" to REVIEW.",
+      "isRead": false,
+      "type": "SYSTEM",
+      "createdAt": "2026-06-01T08:51:15.566Z"
+    }
+  ]
+}
