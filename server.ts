@@ -7,7 +7,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { createServer as createViteServer } from 'vite';
 import { db } from './src/db/dbEngine';
 import { User, UserRole, Task, TaskStatus, TaskPriority, Notification, Client, CommunicationLog, Team } from './src/types';
 
@@ -128,7 +127,8 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     console.error('Login routing error', err);
-    return res.status(500).json({ error: 'An unexpected authentication error occurred on our server.' });
+    const detail = err && err.message ? `: ${err.message}` : '';
+    return res.status(500).json({ error: `An unexpected authentication error occurred on our server${detail}` });
   }
 });
 
@@ -215,7 +215,8 @@ Your credentials are live. Feel free to invite team leaders and employees to col
     });
   } catch (err: any) {
     console.error('Signup error', err);
-    return res.status(500).json({ error: 'Could not configure enterprise signup workspace.' });
+    const detail = err && err.message ? `: ${err.message}` : '';
+    return res.status(500).json({ error: `Could not configure enterprise signup workspace${detail}` });
   }
 });
 
@@ -961,6 +962,7 @@ app.post('/api/notifications/read', authenticateJWT, async (req: AuthenticatedRe
 async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
     // Mount Vite middleware in development container
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa'

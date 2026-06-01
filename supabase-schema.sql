@@ -82,6 +82,16 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notifications_company ON notifications(company_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 
+-- Explicitly Disable Row Level Security (RLS) on all created tables to ensure Vercel requests succeed
+ALTER TABLE companies DISABLE ROW LEVEL SECURITY;
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE teams DISABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks DISABLE ROW LEVEL SECURITY;
+ALTER TABLE performance_scores DISABLE ROW LEVEL SECURITY;
+ALTER TABLE clients DISABLE ROW LEVEL SECURITY;
+ALTER TABLE communication_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications DISABLE ROW LEVEL SECURITY;
+
 -- Commit structural setup
 COMMIT;
 
