@@ -111,11 +111,11 @@ async function startTestSuite() {
 
   // Database State Engine Cache Validation
   try {
-    const freshTasks = db.getTasks('co_aether');
+    const freshTasks = await db.getTasks('co_aether');
     assert(Array.isArray(freshTasks), 'Database engine returns tasks matching enterprise company ID as list arrays');
     
     // Check that companies are correct
-    const aetherCompany = db.getCompanyById('co_aether');
+    const aetherCompany = await db.getCompanyById('co_aether');
     assert(aetherCompany !== null && aetherCompany?.name === 'Aether Dynamics', 'Database isolates and returns enterprise information accurately');
   } catch (e: any) {
     assert(false, 'Database state queries are fully functional', e.toString());
@@ -123,7 +123,7 @@ async function startTestSuite() {
 
   // Simulated Database Row Insertion & Removal
   try {
-    const tempUser = db.getUserById('usr_ae_admin', 'co_aether');
+    const tempUser = await db.getUserById('usr_ae_admin', 'co_aether');
     assert(tempUser !== null && tempUser.role === UserRole.ADMIN, 'Database accurately queries records using compound indexes (UserId + CompanyId)');
   } catch (e: any) {
     assert(false, 'Transactional querying test succeeded', e.toString());

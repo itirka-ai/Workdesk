@@ -6,6 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
 import {
   User,
   Company,
@@ -36,6 +37,17 @@ interface Schema {
 
 // Global in-memory cache to make reads lightning-fast
 let dbCache: Schema | null = null;
+
+// Supabase Connection parameters for Enterprise scalability
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+
+export const isSupabaseEnabled = !!(SUPABASE_URL && SUPABASE_KEY);
+
+const supabase = isSupabaseEnabled ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+// Tracking variable to handle seed injection locking
+let isSeedingCompleted = false;
 
 // Helper to ensure database structure exists
 function ensureDb() {
@@ -619,46 +631,184 @@ function generateInitialSeeds(): Schema {
   };
 }
 
-// Database query APIs enforcing strict tenant isolation if needed
+// Supabase Auto-Seeding controller (Only executes on an empty connected DB)
+async function ensureSupabaseSeeded() {
+  if (!isSupabaseEnabled || !supabase || isSeedingCompleted) return;
+
+  try {
+    const { count, error } = await supabase
+      .from('companies')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) {
+      console.error('[Supabase DB Loader] Verification failed, check your table definitions or SQL schema.', error);
+      return;
+    }
+
+    if (count === 0) {
+      console.log('⚡ [Supabase DB Loader] Detected fresh empty database tables. Seeding default multi-tenant personas...');
+      const seeds = generateInitialSeeds();
+
+      for (const co of seeds.companies) {
+        await supabase.from('companies').upsert({ id: co.id, data: co });
+      }
+      for (const usr of seeds.users) {
+        await supabase.from('users').upsert({ id: usr.id, company_id: usr.companyId, email: usr.email.toLowerCase(), data: usr });
+      }
+      for (const team of seeds.teams) {
+        await supabase.from('teams').upsert({ id: team.id, company_id: team.companyId, data: team });
+      }
+      for (const t of seeds.tasks) {
+        await supabase.from('tasks').upsert({ id: t.id, company_id: t.companyId, data: t });
+      }
+      for (const perf of seeds.performanceScores) {
+        await supabase.from('performance_scores').upsert({ id: perf.id, company_id: perf.companyId, user_id: perf.userId, data: perf });
+      }
+      for (const cli of seeds.clients) {
+        await supabase.from('clients').upsert({ id: cli.id, company_id: cli.companyId, data: cli });
+      }
+      for (const log of seeds.communicationLogs) {
+        await supabase.from('communication_logs').upsert({ id: log.id, company_id: log.companyId, data: log });
+      }
+      for (const notif of seeds.notifications) {
+        await supabase.from('notifications').upsert({ id: notif.id, company_id: notif.companyId, user_id: notif.userId, data: notif });
+      }
+
+      console.log('🎉 [Supabase DB Loader] Tables seeded correctly with production test credentials.');
+    }
+    isSeedingCompleted = true;
+  } catch (err) {
+    console.error('Failed to run Supabase DB autoseed logic:', err);
+  }
+}
+
+// Scalable query and mutation operations supporting Dual local file-persistence and Production-ready Supabase DB
 export const db = {
   // Companies
-  getCompanies(): Company[] {
+  async getCompanies(): Promise<Company[]> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase.from('companies').select('data');
+      if (error) {
+        console.error('Supabase getCompanies error:', error);
+        return [];
+      }
+      return (data || []).map(r => r.data as Company);
+    }
     ensureDb();
     return dbCache!.companies;
   },
-  getCompanyById(id: string): Company | null {
+
+  async getCompanyById(id: string): Promise<Company | null> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase.from('companies').select('data').eq('id', id).maybeSingle();
+      if (error) {
+        console.error('Supabase getCompanyById error:', error);
+        return null;
+      }
+      return data ? (data.data as Company) : null;
+    }
     ensureDb();
     return dbCache!.companies.find(c => c.id === id) || null;
   },
-  saveCompany(co: Company): Company {
+
+  async saveCompany(co: Company): Promise<Company> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase.from('companies').upsert({ id: co.id, data: co });
+      if (error) {
+        console.error('Supabase saveCompany error:', error);
+        throw error;
+      }
+      return co;
+    }
     ensureDb();
-    dbCache!.companies.push(co);
+    const idx = dbCache!.companies.findIndex(c => c.id === co.id);
+    if (idx >= 0) {
+      dbCache!.companies[idx] = co;
+    } else {
+      dbCache!.companies.push(co);
+    }
     saveDb();
     return co;
   },
 
   // Users
-  getUsers(companyId?: string): User[] {
+  async getUsers(companyId?: string): Promise<User[]> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      let query = supabase.from('users').select('data');
+      if (companyId) {
+        query = query.eq('company_id', companyId);
+      }
+      const { data, error } = await query;
+      if (error) {
+        console.error('Supabase getUsers error:', error);
+        return [];
+      }
+      return (data || []).map(r => r.data as User);
+    }
     ensureDb();
     if (companyId) {
       return dbCache!.users.filter(u => u.companyId === companyId);
     }
     return dbCache!.users;
   },
-  getUserById(id: string, companyId?: string): User | null {
+
+  async getUserById(id: string, companyId?: string): Promise<User | null> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      let query = supabase.from('users').select('data').eq('id', id);
+      if (companyId) {
+        query = query.eq('company_id', companyId);
+      }
+      const { data, error } = await query.maybeSingle();
+      if (error) {
+        console.error('Supabase getUserById error:', error);
+        return null;
+      }
+      return data ? (data.data as User) : null;
+    }
     ensureDb();
     const user = dbCache!.users.find(u => u.id === id);
     if (!user) return null;
     if (companyId && user.companyId !== companyId) return null;
     return user;
   },
-  getUserByEmail(email: string): User | null {
+
+  async getUserByEmail(email: string): Promise<User | null> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase
+        .from('users')
+        .select('data')
+        .eq('email', email.toLowerCase())
+        .maybeSingle();
+      if (error) {
+        console.error('Supabase getUserByEmail error:', error);
+        return null;
+      }
+      return data ? (data.data as User) : null;
+    }
     ensureDb();
     return dbCache!.users.find(u => u.email.toLowerCase() === email.toLowerCase()) || null;
   },
-  saveUser(user: User): User {
+
+  async saveUser(user: User): Promise<User> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase.from('users').upsert({
+        id: user.id,
+        company_id: user.companyId,
+        email: user.email.toLowerCase(),
+        data: user
+      });
+      if (error) {
+        console.error('Supabase saveUser error:', error);
+        throw error;
+      }
+      return user;
+    }
     ensureDb();
-    // Exclude duplicates
     const idx = dbCache!.users.findIndex(u => u.id === user.id);
     if (idx >= 0) {
       dbCache!.users[idx] = user;
@@ -668,7 +818,20 @@ export const db = {
     saveDb();
     return user;
   },
-  deleteUser(id: string, companyId: string): boolean {
+
+  async deleteUser(id: string, companyId: string): Promise<boolean> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', id)
+        .eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase deleteUser error:', error);
+        return false;
+      }
+      return true;
+    }
     ensureDb();
     const len = dbCache!.users.length;
     dbCache!.users = dbCache!.users.filter(u => !(u.id === id && u.companyId === companyId));
@@ -680,15 +843,52 @@ export const db = {
   },
 
   // Teams
-  getTeams(companyId: string): Team[] {
+  async getTeams(companyId: string): Promise<Team[]> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase.from('teams').select('data').eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase getTeams error:', error);
+        return [];
+      }
+      return (data || []).map(r => r.data as Team);
+    }
     ensureDb();
     return dbCache!.teams.filter(t => t.companyId === companyId);
   },
-  getTeamById(id: string, companyId: string): Team | null {
+
+  async getTeamById(id: string, companyId: string): Promise<Team | null> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase
+        .from('teams')
+        .select('data')
+        .eq('id', id)
+        .eq('company_id', companyId)
+        .maybeSingle();
+      if (error) {
+        console.error('Supabase getTeamById error:', error);
+        return null;
+      }
+      return data ? (data.data as Team) : null;
+    }
     ensureDb();
     return dbCache!.teams.find(t => t.id === id && t.companyId === companyId) || null;
   },
-  saveTeam(team: Team): Team {
+
+  async saveTeam(team: Team): Promise<Team> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase.from('teams').upsert({
+        id: team.id,
+        company_id: team.companyId,
+        data: team
+      });
+      if (error) {
+        console.error('Supabase saveTeam error:', error);
+        throw error;
+      }
+      return team;
+    }
     ensureDb();
     const idx = dbCache!.teams.findIndex(t => t.id === team.id && t.companyId === team.companyId);
     if (idx >= 0) {
@@ -699,7 +899,20 @@ export const db = {
     saveDb();
     return team;
   },
-  deleteTeam(id: string, companyId: string): boolean {
+
+  async deleteTeam(id: string, companyId: string): Promise<boolean> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', id)
+        .eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase deleteTeam error:', error);
+        return false;
+      }
+      return true;
+    }
     ensureDb();
     const len = dbCache!.teams.length;
     dbCache!.teams = dbCache!.teams.filter(t => !(t.id === id && t.companyId === companyId));
@@ -711,15 +924,52 @@ export const db = {
   },
 
   // Tasks
-  getTasks(companyId: string): Task[] {
+  async getTasks(companyId: string): Promise<Task[]> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase.from('tasks').select('data').eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase getTasks error:', error);
+        return [];
+      }
+      return (data || []).map(r => r.data as Task);
+    }
     ensureDb();
     return dbCache!.tasks.filter(t => t.companyId === companyId);
   },
-  getTaskById(id: string, companyId: string): Task | null {
+
+  async getTaskById(id: string, companyId: string): Promise<Task | null> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('data')
+        .eq('id', id)
+        .eq('company_id', companyId)
+        .maybeSingle();
+      if (error) {
+        console.error('Supabase getTaskById error:', error);
+        return null;
+      }
+      return data ? (data.data as Task) : null;
+    }
     ensureDb();
     return dbCache!.tasks.find(t => t.id === id && t.companyId === companyId) || null;
   },
-  saveTask(task: Task): Task {
+
+  async saveTask(task: Task): Promise<Task> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase.from('tasks').upsert({
+        id: task.id,
+        company_id: task.companyId,
+        data: task
+      });
+      if (error) {
+        console.error('Supabase saveTask error:', error);
+        throw error;
+      }
+      return task;
+    }
     ensureDb();
     const idx = dbCache!.tasks.findIndex(t => t.id === task.id && t.companyId === task.companyId);
     if (idx >= 0) {
@@ -730,7 +980,20 @@ export const db = {
     saveDb();
     return task;
   },
-  deleteTask(id: string, companyId: string): boolean {
+
+  async deleteTask(id: string, companyId: string): Promise<boolean> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id)
+        .eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase deleteTask error:', error);
+        return false;
+      }
+      return true;
+    }
     ensureDb();
     const len = dbCache!.tasks.length;
     dbCache!.tasks = dbCache!.tasks.filter(t => !(t.id === id && t.companyId === companyId));
@@ -742,15 +1005,53 @@ export const db = {
   },
 
   // Performance Scores
-  getPerformanceScores(companyId: string): PerformanceScore[] {
+  async getPerformanceScores(companyId: string): Promise<PerformanceScore[]> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase.from('performance_scores').select('data').eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase getPerformanceScores error:', error);
+        return [];
+      }
+      return (data || []).map(r => r.data as PerformanceScore);
+    }
     ensureDb();
     return dbCache!.performanceScores.filter(p => p.companyId === companyId);
   },
-  getPerformanceScoreByUserId(userId: string, companyId: string): PerformanceScore | null {
+
+  async getPerformanceScoreByUserId(userId: string, companyId: string): Promise<PerformanceScore | null> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase
+        .from('performance_scores')
+        .select('data')
+        .eq('user_id', userId)
+        .eq('company_id', companyId)
+        .maybeSingle();
+      if (error) {
+        console.error('Supabase getPerformanceScoreByUserId error:', error);
+        return null;
+      }
+      return data ? (data.data as PerformanceScore) : null;
+    }
     ensureDb();
     return dbCache!.performanceScores.find(p => p.userId === userId && p.companyId === companyId) || null;
   },
-  savePerformanceScore(score: PerformanceScore): PerformanceScore {
+
+  async savePerformanceScore(score: PerformanceScore): Promise<PerformanceScore> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase.from('performance_scores').upsert({
+        id: score.id,
+        company_id: score.companyId,
+        user_id: score.userId,
+        data: score
+      });
+      if (error) {
+        console.error('Supabase savePerformanceScore error:', error);
+        throw error;
+      }
+      return score;
+    }
     ensureDb();
     const idx = dbCache!.performanceScores.findIndex(p => p.id === score.id && p.companyId === score.companyId);
     if (idx >= 0) {
@@ -763,15 +1064,52 @@ export const db = {
   },
 
   // Clients
-  getClients(companyId: string): Client[] {
+  async getClients(companyId: string): Promise<Client[]> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase.from('clients').select('data').eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase getClients error:', error);
+        return [];
+      }
+      return (data || []).map(r => r.data as Client);
+    }
     ensureDb();
     return dbCache!.clients.filter(c => c.companyId === companyId);
   },
-  getClientById(id: string, companyId: string): Client | null {
+
+  async getClientById(id: string, companyId: string): Promise<Client | null> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase
+        .from('clients')
+        .select('data')
+        .eq('id', id)
+        .eq('company_id', companyId)
+        .maybeSingle();
+      if (error) {
+        console.error('Supabase getClientById error:', error);
+        return null;
+      }
+      return data ? (data.data as Client) : null;
+    }
     ensureDb();
     return dbCache!.clients.find(c => c.id === id && c.companyId === companyId) || null;
   },
-  saveClient(client: Client): Client {
+
+  async saveClient(client: Client): Promise<Client> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase.from('clients').upsert({
+        id: client.id,
+        company_id: client.companyId,
+        data: client
+      });
+      if (error) {
+        console.error('Supabase saveClient error:', error);
+        throw error;
+      }
+      return client;
+    }
     ensureDb();
     const idx = dbCache!.clients.findIndex(c => c.id === client.id && c.companyId === client.companyId);
     if (idx >= 0) {
@@ -782,7 +1120,20 @@ export const db = {
     saveDb();
     return client;
   },
-  deleteClient(id: string, companyId: string): boolean {
+
+  async deleteClient(id: string, companyId: string): Promise<boolean> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id)
+        .eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase deleteClient error:', error);
+        return false;
+      }
+      return true;
+    }
     ensureDb();
     const len = dbCache!.clients.length;
     dbCache!.clients = dbCache!.clients.filter(c => !(c.id === id && c.companyId === companyId));
@@ -794,11 +1145,33 @@ export const db = {
   },
 
   // Communication Logs
-  getCommunicationLogs(companyId: string): CommunicationLog[] {
+  async getCommunicationLogs(companyId: string): Promise<CommunicationLog[]> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase.from('communication_logs').select('data').eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase getCommunicationLogs error:', error);
+        return [];
+      }
+      return (data || []).map(r => r.data as CommunicationLog);
+    }
     ensureDb();
     return dbCache!.communicationLogs.filter(c => c.companyId === companyId);
   },
-  saveCommunicationLog(log: CommunicationLog): CommunicationLog {
+
+  async saveCommunicationLog(log: CommunicationLog): Promise<CommunicationLog> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase.from('communication_logs').upsert({
+        id: log.id,
+        company_id: log.companyId,
+        data: log
+      });
+      if (error) {
+        console.error('Supabase saveCommunicationLog error:', error);
+        throw error;
+      }
+      return log;
+    }
     ensureDb();
     dbCache!.communicationLogs.push(log);
     saveDb();
@@ -806,17 +1179,64 @@ export const db = {
   },
 
   // Notifications
-  getNotifications(userId: string, companyId: string): Notification[] {
+  async getNotifications(userId: string, companyId: string): Promise<Notification[]> {
+    if (isSupabaseEnabled && supabase) {
+      await ensureSupabaseSeeded();
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('data')
+        .eq('user_id', userId)
+        .eq('company_id', companyId);
+      if (error) {
+        console.error('Supabase getNotifications error:', error);
+        return [];
+      }
+      return (data || []).map(r => r.data as Notification);
+    }
     ensureDb();
     return dbCache!.notifications.filter(n => n.userId === userId && n.companyId === companyId);
   },
-  saveNotification(notif: Notification): Notification {
+
+  async saveNotification(notif: Notification): Promise<Notification> {
+    if (isSupabaseEnabled && supabase) {
+      const { error } = await supabase.from('notifications').upsert({
+        id: notif.id,
+        company_id: notif.companyId,
+        user_id: notif.userId,
+        data: notif
+      });
+      if (error) {
+        console.error('Supabase saveNotification error:', error);
+        throw error;
+      }
+      return notif;
+    }
     ensureDb();
     dbCache!.notifications.push(notif);
     saveDb();
     return notif;
   },
-  markNotificationAsRead(id: string, userId: string, companyId: string): boolean {
+
+  async markNotificationAsRead(id: string, userId: string, companyId: string): Promise<boolean> {
+    if (isSupabaseEnabled && supabase) {
+      const { data, error: fetchErr } = await supabase
+        .from('notifications')
+        .select('data')
+        .eq('id', id)
+        .eq('user_id', userId)
+        .eq('company_id', companyId)
+        .maybeSingle();
+      if (fetchErr || !data) return false;
+      const notifObj = data.data as Notification;
+      notifObj.isRead = true;
+      const { error: saveErr } = await supabase.from('notifications').upsert({
+        id,
+        company_id: companyId,
+        user_id: userId,
+        data: notifObj
+      });
+      return !saveErr;
+    }
     ensureDb();
     const notif = dbCache!.notifications.find(n => n.id === id && n.userId === userId && n.companyId === companyId);
     if (notif) {
@@ -826,7 +1246,29 @@ export const db = {
     }
     return false;
   },
-  markAllNotificationsAsRead(userId: string, companyId: string): void {
+
+  async markAllNotificationsAsRead(userId: string, companyId: string): Promise<void> {
+    if (isSupabaseEnabled && supabase) {
+      const { data, error: fetchErr } = await supabase
+        .from('notifications')
+        .select('data')
+        .eq('user_id', userId)
+        .eq('company_id', companyId);
+      if (fetchErr || !data) return;
+      for (const row of data) {
+        const notifObj = row.data as Notification;
+        if (!notifObj.isRead) {
+          notifObj.isRead = true;
+          await supabase.from('notifications').upsert({
+            id: notifObj.id,
+            company_id: companyId,
+            user_id: userId,
+            data: notifObj
+          });
+        }
+      }
+      return;
+    }
     ensureDb();
     dbCache!.notifications.forEach(n => {
       if (n.userId === userId && n.companyId === companyId) {

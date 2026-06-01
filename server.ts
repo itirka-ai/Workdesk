@@ -49,8 +49,8 @@ WorkDesk B2B SaaS Platform © 2026
 `);
 }
 
-// Authentication check middleware
-function authenticateJWT(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+// Authentication check middleware (Async to support Supabase lookups securely)
+async function authenticateJWT(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Authorization header is missing or improperly formed.' });
@@ -59,7 +59,7 @@ function authenticateJWT(req: AuthenticatedRequest, res: Response, next: NextFun
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; companyId: string };
-    const user = db.getUserById(decoded.userId, decoded.companyId);
+    const user = await db.getUserById(decoded.userId, decoded.companyId);
 
     if (!user) {
       return res.status(401).json({ error: 'User account or company association is invalid.' });
@@ -91,7 +91,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
   }
 
   try {
-    const user = db.getUserByEmail(email);
+    const user = await db.getUserByEmail(email);
     if (!user || !user.passwordHash) {
       return res.status(401).json({ error: 'Invalid email or password associated with this platform.' });
     }
@@ -105,7 +105,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'This user account has been deactivated or removed by the administrator. Access is restricted.' });
     }
 
-    const company = db.getCompanyById(user.companyId);
+    const company = await db.getCompanyById(user.companyId);
     if (!company) {
       return res.status(404).json({ error: 'Associated company profile could not be found.' });
     }
@@ -140,16 +140,16 @@ app.post('/api/auth/signup', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'All fields are strictly required to instantiate a new enterprise tenant.' });
   }
 
-  // Check if email already exists
-  const existingUser = db.getUserByEmail(adminEmail);
-  if (existingUser) {
-    return res.status(400).json({ error: 'A user account with this email address already exists.' });
-  }
-
   try {
+    // Check if email already exists
+    const existingUser = await db.getUserByEmail(adminEmail);
+    if (existingUser) {
+      return res.status(400).json({ error: 'A user account with this email address already exists.' });
+    }
+
     // 1. Create Company ID
     const companyId = `co_${companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}_${Date.now().toString().slice(-4)}`;
-    const newCompany = db.saveCompany({
+    const newCompany = await db.saveCompany({
       id: companyId,
       name: companyName,
       domain: companyDomain,
@@ -162,7 +162,7 @@ app.post('/api/auth/signup', async (req: Request, res: Response) => {
 
     // 3. Save Admin User
     const adminId = `usr_adm_${Date.now().toString().slice(-6)}`;
-    const newAdmin = db.saveUser({
+    const newAdmin = await db.saveUser({
       id: adminId,
       name: adminName,
       email: adminEmail,
@@ -174,7 +174,7 @@ app.post('/api/auth/signup', async (req: Request, res: Response) => {
     });
 
     // 4. Set Initial Performance Score Template for Admin
-    db.savePerformanceScore({
+    await db.savePerformanceScore({
       id: `perf_${adminId}`,
       userId: adminId,
       companyId: companyId,
@@ -220,15 +220,19 @@ Your credentials are live. Feel free to invite team leaders and employees to col
 });
 
 // Me Profile Token Verification
-app.get('/api/auth/me', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const company = db.getCompanyById(req.companyId!);
-  if (!company) {
-    return res.status(404).json({ error: 'Company workspace association matches a defunct resource.' });
+app.get('/api/auth/me', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const company = await db.getCompanyById(req.companyId!);
+    if (!company) {
+      return res.status(404).json({ error: 'Company workspace association matches a defunct resource.' });
+    }
+    return res.json({
+      user: req.user,
+      company
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to verify me profile.' });
   }
-  return res.json({
-    user: req.user,
-    company
-  });
 });
 
 // Change Password Endpoint
@@ -242,7 +246,7 @@ app.put('/api/auth/change-password', authenticateJWT, async (req: AuthenticatedR
   }
 
   try {
-    const fullUser = db.getUserById(req.user!.id, req.companyId!);
+    const fullUser = await db.getUserById(req.user!.id, req.companyId!);
     if (!fullUser || !fullUser.passwordHash) {
       return res.status(404).json({ error: 'User record not found.' });
     }
@@ -256,7 +260,7 @@ app.put('/api/auth/change-password', authenticateJWT, async (req: AuthenticatedR
     const newHash = await bcrypt.hash(newPassword, salt);
     
     fullUser.passwordHash = newHash;
-    db.saveUser(fullUser);
+    await db.saveUser(fullUser);
 
     logSystemActivity(req.companyId!, `User ${req.user!.name} changed their secure account password.`);
     return res.json({ success: true, message: 'Password updated successfully.' });
@@ -271,38 +275,45 @@ app.put('/api/auth/change-password', authenticateJWT, async (req: AuthenticatedR
 // 2. TASK CONVENTIONS (Multi-Tenant, Role Protected)
 
 // Get all tasks (enforcing strict tenant bounds)
-app.get('/api/tasks', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const allTasks = db.getTasks(req.companyId!);
+app.get('/api/tasks', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const allTasks = await db.getTasks(req.companyId!);
 
-  // If user is employee, filter to show ONLY their assigned tasks
-  if (req.user?.role === UserRole.EMPLOYEE) {
-    const filtered = allTasks.filter(t => t.assignedTo === req.user?.id);
-    return res.json(filtered);
+    // If user is employee, filter to show ONLY their assigned tasks
+    if (req.user?.role === UserRole.EMPLOYEE) {
+      const filtered = allTasks.filter(t => t.assignedTo === req.user?.id);
+      return res.json(filtered);
+    }
+
+    return res.json(allTasks);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to query tasks.' });
   }
-
-  // If team leader, they can view either all tasks, or we track what's standard. Let's return all tasks so team leaders can monitor enterprise operations, but indicate performance scores properly.
-  return res.json(allTasks);
 });
 
 // Retrieve specific Task Detailed Page
-app.get('/api/tasks/:id', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const id = req.params.id;
-  const task = db.getTaskById(id, req.companyId!);
+app.get('/api/tasks/:id', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const id = req.params.id;
+    const task = await db.getTaskById(id, req.companyId!);
 
-  if (!task) {
-    return res.status(404).json({ error: 'Task detail could not be loaded or belongs to another tenant partition.' });
+    if (!task) {
+      return res.status(404).json({ error: 'Task detail could not be loaded or belongs to another tenant partition.' });
+    }
+
+    // Employee guard checking
+    if (req.user?.role === UserRole.EMPLOYEE && task.assignedTo !== req.user.id) {
+      return res.status(403).json({ error: 'You are unauthorized to view private task details outside your scope.' });
+    }
+
+    return res.json(task);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to load task details.' });
   }
-
-  // Employee guard checking
-  if (req.user?.role === UserRole.EMPLOYEE && task.assignedTo !== req.user.id) {
-    return res.status(403).json({ error: 'You are unauthorized to view private task details outside your scope.' });
-  }
-
-  return res.json(task);
 });
 
 // Create task (Admin & Leaders Only)
-app.post('/api/tasks', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.post('/api/tasks', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   const { title, description, assignedTo, deadline, priority, recurringType, isFutureScheduled, scheduledDate } = req.body;
 
   if (req.user?.role === UserRole.EMPLOYEE) {
@@ -313,63 +324,64 @@ app.post('/api/tasks', authenticateJWT, (req: AuthenticatedRequest, res: Respons
     return res.status(400).json({ error: 'Title, description, assignee, deadline constraint, and priority tier are required.' });
   }
 
-  // Verify assignee exists in same tenant
-  const assignee = db.getUserById(assignedTo, req.companyId!);
-  if (!assignee) {
-    return res.status(400).json({ error: 'Assignee does not belong to your company tenant.' });
-  }
+  try {
+    // Verify assignee exists in same tenant
+    const assignee = await db.getUserById(assignedTo, req.companyId!);
+    if (!assignee) {
+      return res.status(400).json({ error: 'Assignee does not belong to your company tenant.' });
+    }
 
-  const taskId = `tsk_${Date.now().toString().slice(-6)}`;
-  const initialAttachments = req.body.attachments || [];
-  
-  const newTask: Task = {
-    id: taskId,
-    companyId: req.companyId!,
-    title,
-    description,
-    assignedTo,
-    createdBy: req.user!.id,
-    deadline,
-    priority: priority as TaskPriority,
-    status: TaskStatus.PENDING,
-    progress: 0,
-    recurringType: (recurringType as any) || 'NONE',
-    isFutureScheduled: !!isFutureScheduled,
-    scheduledDate,
-    attachments: initialAttachments,
-    comments: [],
-    activityLogs: [{
-      id: `act_${Date.now()}_0`,
-      userId: req.user!.id,
-      userName: req.user!.name,
-      action: initialAttachments.length > 0 
-        ? `Task created (with ${initialAttachments.length} attachments) and assigned to ${assignee.name}`
-        : `Task created and assigned to ${assignee.name}`,
-      timestamp: new Date().toISOString()
-    }],
-    createdAt: new Date().toISOString()
-  };
+    const taskId = `tsk_${Date.now().toString().slice(-6)}`;
+    const initialAttachments = req.body.attachments || [];
+    
+    const newTask: Task = {
+      id: taskId,
+      companyId: req.companyId!,
+      title,
+      description,
+      assignedTo,
+      createdBy: req.user!.id,
+      deadline,
+      priority: priority as TaskPriority,
+      status: TaskStatus.PENDING,
+      progress: 0,
+      recurringType: (recurringType as any) || 'NONE',
+      isFutureScheduled: !!isFutureScheduled,
+      scheduledDate,
+      attachments: initialAttachments,
+      comments: [],
+      activityLogs: [{
+        id: `act_${Date.now()}_0`,
+        userId: req.user!.id,
+        userName: req.user!.name,
+        action: initialAttachments.length > 0 
+          ? `Task created (with ${initialAttachments.length} attachments) and assigned to ${assignee.name}`
+          : `Task created and assigned to ${assignee.name}`,
+        timestamp: new Date().toISOString()
+      }],
+      createdAt: new Date().toISOString()
+    };
 
-  db.saveTask(newTask);
+    await db.saveTask(newTask);
 
-  // Notify employee via inside alerts pool
-  db.saveNotification({
-    id: `not_${Date.now().toString().slice(-6)}`,
-    userId: assignedTo,
-    companyId: req.companyId!,
-    title: `New Task Assigned: ${title}`,
-    message: `You have been assigned "${title}" by ${req.user!.name}. Finish target deadline is ${new Date(deadline).toLocaleDateString()}.`,
-    isRead: false,
-    type: 'TASK_ASSIGNED',
-    createdAt: new Date().toISOString()
-  });
+    // Notify employee via inside alerts pool
+    await db.saveNotification({
+      id: `not_${Date.now().toString().slice(-6)}`,
+      userId: assignedTo,
+      companyId: req.companyId!,
+      title: `New Task Assigned: ${title}`,
+      message: `You have been assigned "${title}" by ${req.user!.name}. Finish target deadline is ${new Date(deadline).toLocaleDateString()}.`,
+      isRead: false,
+      type: 'TASK_ASSIGNED',
+      createdAt: new Date().toISOString()
+    });
 
-  // Simulating the automatic mail service trigger
-  simulateEmailNotification(
-    assignee.email,
-    req.user!.name,
-    `[WorkDesk Assignment]: ${title}`,
-    `Hi ${assignee.name},
+    // Simulating the automatic mail service trigger
+    simulateEmailNotification(
+      assignee.email,
+      req.user!.name,
+      `[WorkDesk Assignment]: ${title}`,
+      `Hi ${assignee.name},
 
 You have been assigned a new task: "${title}".
 Assigned By: ${req.user!.name}
@@ -377,199 +389,216 @@ Target Deadline: ${new Date(deadline).toLocaleString()}
 Priority Rating: ${priority}
 
 Please sign in to WorkDesk to review specifications and record progress.`
-  );
+    );
 
-  logSystemActivity(req.companyId!, `Created task "${title}" assigned to ${assignee.name}.`);
+    logSystemActivity(req.companyId!, `Created task "${title}" assigned to ${assignee.name}.`);
 
-  return res.status(201).json(newTask);
+    return res.status(201).json(newTask);
+  } catch (err) {
+    console.error('Task creation routing error:', err);
+    return res.status(500).json({ error: 'Failed to persist task.' });
+  }
 });
 
 // Update Task (Progress, status, comments addition, file uploads)
-app.put('/api/tasks/:id', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-  const task = db.getTaskById(id, req.companyId!);
+app.put('/api/tasks/:id', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const task = await db.getTaskById(id, req.companyId!);
 
-  if (!task) {
-    return res.status(404).json({ error: 'Task detail could not be updated or tenant ID matches failed references.' });
-  }
-
-  // Access check
-  if (req.user?.role === UserRole.EMPLOYEE && task.assignedTo !== req.user.id) {
-    return res.status(403).json({ error: 'Unauthorized to modify tasks that are not yours.' });
-  }
-
-  const { title, description, assignedTo, deadline, priority, status, progress, commentContent, attachmentFile } = req.body;
-
-  let activityMessage = '';
-
-  // Handle new comments appending
-  if (commentContent) {
-    const commentId = `cmt_${Date.now().toString().slice(-6)}`;
-    const newComment = {
-      id: commentId,
-      taskId: id,
-      commenterId: req.user!.id,
-      commenterName: req.user!.name,
-      commenterRole: req.user!.role,
-      content: commentContent,
-      createdAt: new Date().toISOString()
-    };
-    task.comments.push(newComment);
-    activityMessage = `Added a comment: "${commentContent.substring(0, 40)}${commentContent.length > 40 ? '...' : ''}"`;
-  }
-
-  // Handle mock attachments payload uploading
-  if (attachmentFile && attachmentFile.name) {
-    task.attachments.push({
-      name: attachmentFile.name,
-      url: attachmentFile.url || '#',
-      uploadedBy: req.user!.name,
-      uploadedAt: new Date().toISOString(),
-      size: attachmentFile.size || '420 KB'
-    });
-    activityMessage = `Uploaded proof file: "${attachmentFile.name}"`;
-  }
-
-  // Status mapping change rules
-  if (status !== undefined && status !== task.status) {
-    const formerState = task.status;
-    task.status = status as TaskStatus;
-
-    if (task.status === TaskStatus.COMPLETED) {
-      task.progress = 100;
+    if (!task) {
+      return res.status(404).json({ error: 'Task detail could not be updated or tenant ID matches failed references.' });
     }
 
-    activityMessage = `Status updated from [${formerState}] to [${task.status}]`;
+    // Access check
+    if (req.user?.role === UserRole.EMPLOYEE && task.assignedTo !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized to modify tasks that are not yours.' });
+    }
 
-    // Trigger Notification for assigner if employee updates status
-    if (req.user!.role === UserRole.EMPLOYEE) {
-      db.saveNotification({
-        id: `not_${Date.now().toString().slice(-6)}`,
-        userId: task.createdBy,
-        companyId: req.companyId!,
-        title: `Task Status Alert: ${task.title}`,
-        message: `${req.user!.name} updated "${task.title}" to ${task.status}.`,
-        isRead: false,
-        type: 'SYSTEM',
+    const { title, description, assignedTo, deadline, priority, status, progress, commentContent, attachmentFile } = req.body;
+
+    let activityMessage = '';
+
+    // Handle new comments appending
+    if (commentContent) {
+      const commentId = `cmt_${Date.now().toString().slice(-6)}`;
+      const newComment = {
+        id: commentId,
+        taskId: id,
+        commenterId: req.user!.id,
+        commenterName: req.user!.name,
+        commenterRole: req.user!.role,
+        content: commentContent,
         createdAt: new Date().toISOString()
+      };
+      task.comments.push(newComment);
+      activityMessage = `Added a comment: "${commentContent.substring(0, 40)}${commentContent.length > 40 ? '...' : ''}"`;
+    }
+
+    // Handle mock attachments payload uploading
+    if (attachmentFile && attachmentFile.name) {
+      task.attachments.push({
+        name: attachmentFile.name,
+        url: attachmentFile.url || '#',
+        uploadedBy: req.user!.name,
+        uploadedAt: new Date().toISOString(),
+        size: attachmentFile.size || '420 KB'
       });
+      activityMessage = `Uploaded proof file: "${attachmentFile.name}"`;
     }
-  }
 
-  // Progress rating slider updates
-  if (progress !== undefined && progress !== task.progress) {
-    task.progress = Number(progress);
-    if (!activityMessage) {
-      activityMessage = `Completion progress adjusted to ${progress}%`;
-    }
-  }
+    // Status mapping change rules
+    if (status !== undefined && status !== task.status) {
+      const formerState = task.status;
+      task.status = status as TaskStatus;
 
-  // Only admin and leaders can update high-level meta details like title, deadline or assignee
-  if (req.user!.role !== UserRole.EMPLOYEE) {
-    if (title) task.title = title;
-    if (description) task.description = description;
+      if (task.status === TaskStatus.COMPLETED) {
+        task.progress = 100;
+      }
 
-    if (assignedTo && assignedTo !== task.assignedTo) {
-      const formerAssignee = db.getUserById(task.assignedTo, req.companyId!);
-      const newAssignee = db.getUserById(assignedTo, req.companyId!);
-      if (newAssignee) {
-        if (req.user!.role === UserRole.TEAM_LEADER) {
-          const leaderTeams = db.getTeams(req.companyId!).filter(t => t.leaderId === req.user!.id);
-          const isMember = leaderTeams.some(t => t.employeeIds.includes(assignedTo)) || assignedTo === req.user!.id;
-          if (!isMember) {
-            return res.status(403).json({ error: 'Team leaders can only delegate/pass tasks to employees in their own team.' });
-          }
-        }
-        task.assignedTo = assignedTo;
-        activityMessage = `Reassigned from ${formerAssignee?.name || 'Unassigned'} to ${newAssignee.name}`;
+      activityMessage = `Status updated from [${formerState}] to [${task.status}]`;
 
-        // Signal new employee
-        db.saveNotification({
+      // Trigger Notification for assigner if employee updates status
+      if (req.user!.role === UserRole.EMPLOYEE) {
+        await db.saveNotification({
           id: `not_${Date.now().toString().slice(-6)}`,
-          userId: assignedTo,
+          userId: task.createdBy,
           companyId: req.companyId!,
-          title: `Reassigned Task: ${task.title}`,
-          message: `You are now assigned to build "${task.title}". Managed by ${req.user!.name}.`,
+          title: `Task Status Alert: ${task.title}`,
+          message: `${req.user!.name} updated "${task.title}" to ${task.status}.`,
           isRead: false,
-          type: 'TASK_ASSIGNED',
+          type: 'SYSTEM',
           createdAt: new Date().toISOString()
         });
       }
     }
 
-    if (deadline) task.deadline = deadline;
-    if (priority) task.priority = priority as TaskPriority;
-  }
-
-  // Push activity log
-  if (activityMessage) {
-    task.activityLogs.push({
-      id: `act_${Date.now().toString().slice(-6)}_${Math.random().toString(36).substring(2, 5)}`,
-      userId: req.user!.id,
-      userName: req.user!.name,
-      action: activityMessage,
-      timestamp: new Date().toISOString()
-    });
-  }
-
-  db.saveTask(task);
-
-  // Recalculate employee performance indicators dynamically!
-  if (task.status === TaskStatus.COMPLETED) {
-    const assigneeScores = db.getPerformanceScoreByUserId(task.assignedTo, req.companyId!);
-    if (assigneeScores) {
-      const allEmpTasks = db.getTasks(req.companyId!).filter(t => t.assignedTo === task.assignedTo);
-      const finished = allEmpTasks.filter(t => t.status === TaskStatus.COMPLETED).length;
-      assigneeScores.taskCompletionRate = Math.round((finished / allEmpTasks.length) * 100);
-
-      // Check deadline matching
-      const onTime = allEmpTasks.filter(t => {
-        if (t.status !== TaskStatus.COMPLETED) return false;
-        const deadlineDate = new Date(t.deadline);
-        const completionDate = new Date();
-        return completionDate <= deadlineDate;
-      }).length;
-
-      assigneeScores.deadlineAdherence = allEmpTasks.filter(t => t.status === TaskStatus.COMPLETED).length > 0
-        ? Math.round((onTime / allEmpTasks.filter(t => t.status === TaskStatus.COMPLETED).length) * 100)
-        : 100;
-
-      // Bump overall scoring index
-      assigneeScores.productivityScore = Math.min(100, Math.round((assigneeScores.taskCompletionRate + assigneeScores.deadlineAdherence) / 2) + 5);
-      assigneeScores.updatedAt = new Date().toISOString();
-      db.savePerformanceScore(assigneeScores);
+    // Progress rating slider updates
+    if (progress !== undefined && progress !== task.progress) {
+      task.progress = Number(progress);
+      if (!activityMessage) {
+        activityMessage = `Completion progress adjusted to ${progress}%`;
+      }
     }
-  }
 
-  return res.json(task);
+    // Only admin and leaders can update high-level meta details like title, deadline or assignee
+    if (req.user!.role !== UserRole.EMPLOYEE) {
+      if (title) task.title = title;
+      if (description) task.description = description;
+
+      if (assignedTo && assignedTo !== task.assignedTo) {
+        const formerAssignee = await db.getUserById(task.assignedTo, req.companyId!);
+        const newAssignee = await db.getUserById(assignedTo, req.companyId!);
+        if (newAssignee) {
+          if (req.user!.role === UserRole.TEAM_LEADER) {
+            const leaderTeams = (await db.getTeams(req.companyId!)).filter(t => t.leaderId === req.user!.id);
+            const isMember = leaderTeams.some(t => t.employeeIds.includes(assignedTo)) || assignedTo === req.user!.id;
+            if (!isMember) {
+              return res.status(403).json({ error: 'Team leaders can only delegate/pass tasks to employees in their own team.' });
+            }
+          }
+          task.assignedTo = assignedTo;
+          activityMessage = `Reassigned from ${formerAssignee?.name || 'Unassigned'} to ${newAssignee.name}`;
+
+          // Signal new employee
+          await db.saveNotification({
+            id: `not_${Date.now().toString().slice(-6)}`,
+            userId: assignedTo,
+            companyId: req.companyId!,
+            title: `Reassigned Task: ${task.title}`,
+            message: `You are now assigned to build "${task.title}". Managed by ${req.user!.name}.`,
+            isRead: false,
+            type: 'TASK_ASSIGNED',
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
+
+      if (deadline) task.deadline = deadline;
+      if (priority) task.priority = priority as TaskPriority;
+    }
+
+    // Push activity log
+    if (activityMessage) {
+      task.activityLogs.push({
+        id: `act_${Date.now().toString().slice(-6)}_${Math.random().toString(36).substring(2, 5)}`,
+        userId: req.user!.id,
+        userName: req.user!.name,
+        action: activityMessage,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    await db.saveTask(task);
+
+    // Recalculate employee performance indicators dynamically!
+    if (task.status === TaskStatus.COMPLETED) {
+      const assigneeScores = await db.getPerformanceScoreByUserId(task.assignedTo, req.companyId!);
+      if (assigneeScores) {
+        const allEmpTasks = (await db.getTasks(req.companyId!)).filter(t => t.assignedTo === task.assignedTo);
+        const finished = allEmpTasks.filter(t => t.status === TaskStatus.COMPLETED).length;
+        assigneeScores.taskCompletionRate = Math.round((finished / allEmpTasks.length) * 100);
+
+        // Check deadline matching
+        const onTime = allEmpTasks.filter(t => {
+          if (t.status !== TaskStatus.COMPLETED) return false;
+          const deadlineDate = new Date(t.deadline);
+          const completionDate = new Date();
+          return completionDate <= deadlineDate;
+        }).length;
+
+        assigneeScores.deadlineAdherence = allEmpTasks.filter(t => t.status === TaskStatus.COMPLETED).length > 0
+          ? Math.round((onTime / allEmpTasks.filter(t => t.status === TaskStatus.COMPLETED).length) * 100)
+          : 100;
+
+        // Bump overall scoring index
+        assigneeScores.productivityScore = Math.min(100, Math.round((assigneeScores.taskCompletionRate + assigneeScores.deadlineAdherence) / 2) + 5);
+        assigneeScores.updatedAt = new Date().toISOString();
+        await db.savePerformanceScore(assigneeScores);
+      }
+    }
+
+    return res.json(task);
+  } catch (err: any) {
+    console.error('Task update error:', err);
+    return res.status(500).json({ error: 'Failed to update task.' });
+  }
 });
 
 // Delete Task (Admin Only)
-app.delete('/api/tasks/:id', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.delete('/api/tasks/:id', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Only administrative personnel can fully remove task definitions.' });
   }
 
   const { id } = req.params;
-  const deleted = db.deleteTask(id, req.companyId!);
+  try {
+    const deleted = await db.deleteTask(id, req.companyId!);
 
-  if (!deleted) {
-    return res.status(404).json({ error: 'Task lookup failed for deletion.' });
+    if (!deleted) {
+      return res.status(404).json({ error: 'Task lookup failed for deletion.' });
+    }
+
+    logSystemActivity(req.companyId!, `Administrator permanently purged Task ID [${id}]`);
+    return res.json({ success: true, message: `Task ID [${id}] has been permanently deleted.` });
+  } catch (err) {
+    return res.status(500).json({ error: 'Task deletion error.' });
   }
-
-  logSystemActivity(req.companyId!, `Administrator permanently purged Task ID [${id}]`);
-  return res.json({ success: true, message: `Task ID [${id}] has been permanently deleted.` });
 });
 
 
 // 3. EMPLOYEE & DEPARTMENTS MANAGEMENT (Multi-Tenant)
 
 // Get all staff users (tenant safe, client gets non-sensitive profiles)
-app.get('/api/employees', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const staff = db.getUsers(req.companyId!);
-  // Format profiles safely
-  const safeStaff = staff.map(({ passwordHash, ...safeUser }) => safeUser);
-  return res.json(safeStaff);
+app.get('/api/employees', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const staff = await db.getUsers(req.companyId!);
+    // Format profiles safely
+    const safeStaff = staff.map(({ passwordHash, ...safeUser }) => safeUser);
+    return res.json(safeStaff);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to get personnel.' });
+  }
 });
 
 // Create Employee (Admin only)
@@ -584,17 +613,17 @@ app.post('/api/employees', authenticateJWT, async (req: AuthenticatedRequest, re
     return res.status(400).json({ error: 'Name, email, target role, department mapping, and secure password are required.' });
   }
 
-  const exists = db.getUserByEmail(email);
-  if (exists) {
-    return res.status(400).json({ error: 'An account with this email address already matches a record.' });
-  }
-
   try {
+    const exists = await db.getUserByEmail(email);
+    if (exists) {
+      return res.status(400).json({ error: 'An account with this email address already matches a record.' });
+    }
+
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
     const empId = `usr_staff_${Date.now().toString().slice(-6)}`;
-    const newEmployee = db.saveUser({
+    const newEmployee = await db.saveUser({
       id: empId,
       name,
       email,
@@ -607,7 +636,7 @@ app.post('/api/employees', authenticateJWT, async (req: AuthenticatedRequest, re
     });
 
     // Seed empty performance dashboard tracking metrics
-    db.savePerformanceScore({
+    await db.savePerformanceScore({
       id: `perf_${empId}`,
       userId: empId,
       companyId: req.companyId!,
@@ -644,34 +673,38 @@ Please log in using your email credentials and default secure passwords.`
 });
 
 // Edit Employee (Admin only)
-app.put('/api/employees/:id', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.put('/api/employees/:id', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Only administrators may alter role models.' });
   }
 
   const { id } = req.params;
-  const staffUser = db.getUserById(id, req.companyId!);
+  try {
+    const staffUser = await db.getUserById(id, req.companyId!);
 
-  if (!staffUser) {
-    return res.status(404).json({ error: 'Personnel profile not found inside your company tenant.' });
+    if (!staffUser) {
+      return res.status(404).json({ error: 'Personnel profile not found inside your company tenant.' });
+    }
+
+    const { name, role, department, phone, isSuspended } = req.body;
+
+    if (name) staffUser.name = name;
+    if (role) staffUser.role = role as UserRole;
+    if (department) staffUser.department = department;
+    if (phone) staffUser.phone = phone;
+    if (isSuspended !== undefined) staffUser.isSuspended = isSuspended;
+
+    await db.saveUser(staffUser);
+
+    const { passwordHash, ...safeResult } = staffUser;
+    return res.json(safeResult);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to update employee.' });
   }
-
-  const { name, role, department, phone, isSuspended } = req.body;
-
-  if (name) staffUser.name = name;
-  if (role) staffUser.role = role as UserRole;
-  if (department) staffUser.department = department;
-  if (phone) staffUser.phone = phone;
-  if (isSuspended !== undefined) staffUser.isSuspended = isSuspended;
-
-  db.saveUser(staffUser);
-
-  const { passwordHash, ...safeResult } = staffUser;
-  return res.json(safeResult);
 });
 
 // Delete Employee (Admin only)
-app.delete('/api/employees/:id', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.delete('/api/employees/:id', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Only administrators are authorized to purge records.' });
   }
@@ -682,26 +715,34 @@ app.delete('/api/employees/:id', authenticateJWT, (req: AuthenticatedRequest, re
     return res.status(400).json({ error: 'You are forbidden from deleting your own root administrative console.' });
   }
 
-  const success = db.deleteUser(id, req.companyId!);
-  if (!success) {
-    return res.status(404).json({ error: 'Personnel record lookup failed for deletion target.' });
-  }
+  try {
+    const success = await db.deleteUser(id, req.companyId!);
+    if (!success) {
+      return res.status(404).json({ error: 'Personnel record lookup failed for deletion target.' });
+    }
 
-  logSystemActivity(req.companyId!, `Purged employee ID [${id}].`);
-  return res.json({ success: true, message: 'Personnel record removed from workspace indices configuration.' });
+    logSystemActivity(req.companyId!, `Purged employee ID [${id}].`);
+    return res.json({ success: true, message: 'Personnel record removed from workspace indices configuration.' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to delete employee.' });
+  }
 });
 
 
 // 3.5. TEAMS & ORGANIZATIONAL MANAGEMENT (Multi-Tenant)
 
 // Get all Teams
-app.get('/api/teams', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const teams = db.getTeams(req.companyId!);
-  return res.json(teams);
+app.get('/api/teams', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const teams = await db.getTeams(req.companyId!);
+    return res.json(teams);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to retrieve teams.' });
+  }
 });
 
 // Create Team (Admin only)
-app.post('/api/teams', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.post('/api/teams', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Administrative credentials are required to instantiate teams.' });
   }
@@ -711,167 +752,207 @@ app.post('/api/teams', authenticateJWT, (req: AuthenticatedRequest, res: Respons
     return res.status(400).json({ error: 'Team name, leader association, and department mapping are required.' });
   }
 
-  const teamId = `team_${Date.now().toString().slice(-6)}`;
-  const newTeam: Team = {
-    id: teamId,
-    name,
-    companyId: req.companyId!,
-    leaderId,
-    department,
-    employeeIds: employeeIds || [],
-    createdAt: new Date().toISOString()
-  };
+  try {
+    const teamId = `team_${Date.now().toString().slice(-6)}`;
+    const newTeam: Team = {
+      id: teamId,
+      name,
+      companyId: req.companyId!,
+      leaderId,
+      department,
+      employeeIds: employeeIds || [],
+      createdAt: new Date().toISOString()
+    };
 
-  db.saveTeam(newTeam);
-  logSystemActivity(req.companyId!, `Established Team [${name}] led by member [${leaderId}].`);
-  return res.status(201).json(newTeam);
+    await db.saveTeam(newTeam);
+    logSystemActivity(req.companyId!, `Established Team [${name}] led by member [${leaderId}].`);
+    return res.status(201).json(newTeam);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to persist team.' });
+  }
 });
 
 // Update Team (Admin only)
-app.put('/api/teams/:id', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.put('/api/teams/:id', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Administrative authority is required to edit structure profiles.' });
   }
 
   const { id } = req.params;
-  const team = db.getTeamById(id, req.companyId!);
-  if (!team) {
-    return res.status(404).json({ error: 'Assigned organizational team record could not be found.' });
+  try {
+    const team = await db.getTeamById(id, req.companyId!);
+    if (!team) {
+      return res.status(404).json({ error: 'Assigned organizational team record could not be found.' });
+    }
+
+    const { name, leaderId, department, employeeIds } = req.body;
+    if (name !== undefined) team.name = name;
+    if (leaderId !== undefined) team.leaderId = leaderId;
+    if (department !== undefined) team.department = department;
+    if (employeeIds !== undefined) team.employeeIds = employeeIds;
+
+    await db.saveTeam(team);
+    logSystemActivity(req.companyId!, `Updated corporate team hierarchy [${team.name}].`);
+    return res.json(team);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to update team.' });
   }
-
-  const { name, leaderId, department, employeeIds } = req.body;
-  if (name !== undefined) team.name = name;
-  if (leaderId !== undefined) team.leaderId = leaderId;
-  if (department !== undefined) team.department = department;
-  if (employeeIds !== undefined) team.employeeIds = employeeIds;
-
-  db.saveTeam(team);
-  logSystemActivity(req.companyId!, `Updated corporate team hierarchy [${team.name}].`);
-  return res.json(team);
 });
 
 // Delete/Dismantle Team (Admin only)
-app.delete('/api/teams/:id', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.delete('/api/teams/:id', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   if (req.user?.role !== UserRole.ADMIN) {
     return res.status(403).json({ error: 'Administrative authority is required to purge structural elements.' });
   }
 
   const { id } = req.params;
-  const success = db.deleteTeam(id, req.companyId!);
-  if (!success) {
-    return res.status(404).json({ error: 'Dismantle team target index lookup failed.' });
-  }
+  try {
+    const success = await db.deleteTeam(id, req.companyId!);
+    if (!success) {
+      return res.status(404).json({ error: 'Dismantle team target index lookup failed.' });
+    }
 
-  logSystemActivity(req.companyId!, `Dismantled organization unit with ID [${id}].`);
-  return res.json({ success: true, message: 'Team has been purged from system indexes successfully.' });
+    logSystemActivity(req.companyId!, `Dismantled organization unit with ID [${id}].`);
+    return res.json({ success: true, message: 'Team has been purged from system indexes successfully.' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to delete team.' });
+  }
 });
 
 
 // 4. PERFORMANCE TRACKING LEADERBOARDS (Tenant safe)
-app.get('/api/performance', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const scores = db.getPerformanceScores(req.companyId!);
-  const companyEmployees = db.getUsers(req.companyId!);
+app.get('/api/performance', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const scores = await db.getPerformanceScores(req.companyId!);
+    const companyEmployees = await db.getUsers(req.companyId!);
 
-  // Hydrate each score record with matching human name and department data
-  const reports = scores.map(score => {
-    const matched = companyEmployees.find(e => e.id === score.userId);
-    return {
-      ...score,
-      employeeName: matched?.name || 'Deactivated Team Member',
-      role: matched?.role || UserRole.EMPLOYEE,
-      department: matched?.department || 'Operations'
-    };
-  });
+    // Hydrate each score record with matching human name and department data
+    const reports = scores.map(score => {
+      const matched = companyEmployees.find(e => e.id === score.userId);
+      return {
+        ...score,
+        employeeName: matched?.name || 'Deactivated Team Member',
+        role: matched?.role || UserRole.EMPLOYEE,
+        department: matched?.department || 'Operations'
+      };
+    });
 
-  return res.json(reports);
+    return res.json(reports);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to resolve performance metrics.' });
+  }
 });
 
 
 // 5. CLIENT & INTERACTION SYSTEMS (Tenant isolated CRM)
 
 // Get Clients
-app.get('/api/clients', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const customClients = db.getClients(req.companyId!);
-  return res.json(customClients);
+app.get('/api/clients', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const customClients = await db.getClients(req.companyId!);
+    return res.json(customClients);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to query client database.' });
+  }
 });
 
 // Add Client
-app.post('/api/clients', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.post('/api/clients', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   const { name, email, phone, industry, notes } = req.body;
 
   if (!name || !email || !phone || !industry) {
     return res.status(400).json({ error: 'Client representation requires Name, Email, Phone contact, and Industry segment.' });
   }
 
-  const clientId = `cli_${Date.now().toString().slice(-6)}`;
-  const newClient: Client = {
-    id: clientId,
-    companyId: req.companyId!,
-    name,
-    email,
-    phone,
-    industry,
-    notes,
-    createdAt: new Date().toISOString()
-  };
+  try {
+    const clientId = `cli_${Date.now().toString().slice(-6)}`;
+    const newClient: Client = {
+      id: clientId,
+      companyId: req.companyId!,
+      name,
+      email,
+      phone,
+      industry,
+      notes,
+      createdAt: new Date().toISOString()
+    };
 
-  db.saveClient(newClient);
-  logSystemActivity(req.companyId!, `Add Client relationship config for [${name}].`);
+    await db.saveClient(newClient);
+    logSystemActivity(req.companyId!, `Add Client relationship config for [${name}].`);
 
-  return res.status(201).json(newClient);
+    return res.status(201).json(newClient);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to persist client.' });
+  }
 });
 
 // Log Client Interactions History (CALL, EMAIL, MEETING)
-app.get('/api/clients/logs', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const logs = db.getCommunicationLogs(req.companyId!);
-  return res.json(logs);
+app.get('/api/clients/logs', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const logs = await db.getCommunicationLogs(req.companyId!);
+    return res.json(logs);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to retrieve interaction registries.' });
+  }
 });
 
-app.post('/api/clients/logs', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.post('/api/clients/logs', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   const { clientId, mode, notes } = req.body;
 
   if (!clientId || !mode || !notes) {
     return res.status(400).json({ error: 'Interaction history logging requires selection of Client, interaction Mode, and summary notes.' });
   }
 
-  const client = db.getClientById(clientId, req.companyId!);
-  if (!client) {
-    return res.status(404).json({ error: 'Client target reference was not found inside your company tenant Partition.' });
+  try {
+    const client = await db.getClientById(clientId, req.companyId!);
+    if (!client) {
+      return res.status(404).json({ error: 'Client target reference was not found inside your company tenant Partition.' });
+    }
+
+    const logId = `log_${Date.now().toString().slice(-6)}`;
+    const newLog: CommunicationLog = {
+      id: logId,
+      clientId,
+      clientName: client.name,
+      companyId: req.companyId!,
+      loggedById: req.user!.id,
+      loggedByName: req.user!.name,
+      mode: mode as 'CALL' | 'EMAIL' | 'MEETING',
+      notes,
+      createdAt: new Date().toISOString()
+    };
+
+    await db.saveCommunicationLog(newLog);
+    logSystemActivity(req.companyId!, `Logged contact mode ${mode} with ${client.name} reference.`);
+
+    return res.status(201).json(newLog);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to record interaction log.' });
   }
-
-  const logId = `log_${Date.now().toString().slice(-6)}`;
-  const newLog: CommunicationLog = {
-    id: logId,
-    clientId,
-    clientName: client.name,
-    companyId: req.companyId!,
-    loggedById: req.user!.id,
-    loggedByName: req.user!.name,
-    mode: mode as 'CALL' | 'EMAIL' | 'MEETING',
-    notes,
-    createdAt: new Date().toISOString()
-  };
-
-  db.saveCommunicationLog(newLog);
-  logSystemActivity(req.companyId!, `Logged contact mode ${mode} with ${client.name} reference.`);
-
-  return res.status(201).json(newLog);
 });
 
 // 6. NOTIFICATION CHANNELS (Mark Reads)
-app.get('/api/notifications', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
-  const alerts = db.getNotifications(req.user!.id, req.companyId!);
-  return res.json(alerts);
+app.get('/api/notifications', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const alerts = await db.getNotifications(req.user!.id, req.companyId!);
+    return res.json(alerts);
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to search notifications.' });
+  }
 });
 
-app.post('/api/notifications/read', authenticateJWT, (req: AuthenticatedRequest, res: Response) => {
+app.post('/api/notifications/read', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.body;
-  if (id) {
-    db.markNotificationAsRead(id, req.user!.id, req.companyId!);
-  } else {
-    db.markAllNotificationsAsRead(req.user!.id, req.companyId!);
+  try {
+    if (id) {
+      await db.markNotificationAsRead(id, req.user!.id, req.companyId!);
+    } else {
+      await db.markAllNotificationsAsRead(req.user!.id, req.companyId!);
+    }
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to update notification state.' });
   }
-  return res.json({ success: true });
 });
 
 
@@ -906,6 +987,11 @@ async function bootstrap() {
   });
 }
 
-bootstrap().catch(err => {
-  console.error('Failed to bootstrap express full-stack server application container', err);
-});
+// Support Vercel serverless vs standalone process
+export default app;
+
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  bootstrap().catch(err => {
+    console.error('Failed to bootstrap express full-stack server application container', err);
+  });
+}

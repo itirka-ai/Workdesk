@@ -169,11 +169,11 @@ export default function LandingPage({
           </p>
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] text-white max-w-3xl mx-auto">
-            Meet the night shift.
+            Work Smarter. Grow Faster.
           </h1>
 
           <p className="text-lg md:text-xl text-[#BCBCC3] max-w-2xl mx-auto font-light leading-relaxed">
-            The on-demand, beautifully collaborative workforce suite. Keep task pipelines moving, measure precise performance indexes, and segregate client communications—built with strict cryptographic isolation constraints.
+            Keep projects moving, monitor team performance, and manage client communication from a single platform. WorkDesk gives your team the tools they need to stay organized, productive, and connected—anytime, anywhere.
           </p>
 
           {/* Button Row */}
@@ -454,9 +454,9 @@ export default function LandingPage({
 
       {/* 13. SIX NAVIGATION FOOTER REGION */}
       <footer className="bg-white border-t border-[#DEDEE2] py-16 px-6 lg:px-12">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-5 gap-8 text-left text-xs mb-12">
-          {/* Column 1 - Brand Info */}
-          <div className="space-y-4 col-span-2 lg:col-span-1">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-start justify-between text-xs mb-12">
+          {/* Brand Info */}
+          <div className="space-y-4 max-w-md text-left">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 bg-black text-white rounded flex items-center justify-center font-bold text-sm">W</div>
               <span className="font-bold text-sm tracking-tight text-[#111]">WorkDesk</span>
@@ -464,56 +464,11 @@ export default function LandingPage({
             <p className="text-[#808088] leading-relaxed">
               Secure B2B workspace for project tracking, CRM activity, team operations, and KPI monitoring — built with strong tenant-level data protection.
             </p>
-            <p className="text-[10px] text-[#808088]">
+          </div>
+          <div className="md:text-right text-left space-y-2">
+            <p className="text-xs text-[#808088]">
               © 2026 WorkDesk. All rights reserved.
             </p>
-          </div>
-
-          {/* Column 2 - Product */}
-          <div className="space-y-3">
-            <h5 className="font-bold text-[#111] uppercase tracking-wider text-[10px]">Product</h5>
-            <ul className="space-y-2 text-[#4D4D4C]">
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">AI Command Center</button></li>
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">Kanban Boards</button></li>
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">KPI Analytics</button></li>
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">CRM Activity Logs</button></li>
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">Team Management</button></li>
-            </ul>
-          </div>
-
-          {/* Column 3 - Platform */}
-          <div className="space-y-3">
-            <h5 className="font-bold text-[#111] uppercase tracking-wider text-[10px]">Platform</h5>
-            <ul className="space-y-2 text-[#4D4D4C]">
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">Workspace Access</button></li>
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">Role Permissions</button></li>
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">Department Management</button></li>
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">Notifications & Alerts</button></li>
-              <li><button onClick={() => openAuthGateway(false)} className="hover:text-black bg-transparent border-none p-0 cursor-pointer text-left text-xs text-[#4D4D4C] block">API Integrations</button></li>
-            </ul>
-          </div>
-
-          {/* Column 4 - Resources */}
-          <div className="space-y-3">
-            <h5 className="font-bold text-[#111] uppercase tracking-wider text-[10px]">Resources</h5>
-            <ul className="space-y-2 text-[#4D4D4C]">
-              <li><a href="#docs" className="hover:text-black text-[#4D4D4C] no-underline">Documentation</a></li>
-              <li><a href="#help" className="hover:text-black text-[#4D4D4C] no-underline">Help Center</a></li>
-              <li><a href="#security" className="hover:text-black text-[#4D4D4C] no-underline">Security Policy</a></li>
-              <li><a href="#status" className="hover:text-black text-[#4D4D4C] no-underline">System Status</a></li>
-              <li><a href="#support" className="hover:text-black text-[#4D4D4C] no-underline">Contact Support</a></li>
-            </ul>
-          </div>
-
-          {/* Column 5 - Legal */}
-          <div className="space-y-3">
-            <h5 className="font-bold text-[#111] uppercase tracking-wider text-[10px]">Legal</h5>
-            <ul className="space-y-2 text-[#4D4D4C]">
-              <li><a href="#privacy" className="hover:text-black text-[#4D4D4C] no-underline">Privacy Policy</a></li>
-              <li><a href="#terms" className="hover:text-black text-[#4D4D4C] no-underline">Terms of Service</a></li>
-              <li><a href="#gdpr" className="hover:text-black text-[#4D4D4C] no-underline">GDPR Compliance</a></li>
-              <li><a href="#security" className="hover:text-black text-[#4D4D4C] no-underline">Data Security</a></li>
-            </ul>
           </div>
         </div>
 

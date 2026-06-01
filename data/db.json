@@ -137,6 +137,17 @@
         "usr_ae_emp1"
       ],
       "createdAt": "2026-05-23T06:21:10.840Z"
+    },
+    {
+      "id": "team_559103",
+      "name": "MVP Quality Assurance Taskforce",
+      "companyId": "co_aether",
+      "leaderId": "usr_ae_leader",
+      "department": "Engineering",
+      "employeeIds": [
+        "usr_ae_emp1"
+      ],
+      "createdAt": "2026-06-01T10:25:59.103Z"
     }
   ],
   "tasks": [
@@ -720,6 +731,108 @@
         }
       ],
       "createdAt": "2026-06-01T08:51:15.450Z"
+    },
+    {
+      "id": "tsk_554078",
+      "companyId": "co_aether",
+      "title": "Formulate Q3 Mission Statement Deliverables",
+      "description": "Verify cross-departmental operations sync and generate visual chart metrics.",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-09-30",
+      "priority": "CRITICAL",
+      "status": "REVIEW",
+      "progress": 90,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "q3-corporate-objective-v1.pdf",
+          "url": "https://ais-pre-yxyhfkk7xwnqoui2jgpots-389822732223.asia-east1.run.app/files/q3-corporate-objective-v1.pdf",
+          "uploadedBy": "Sarah Chen",
+          "uploadedAt": "2026-06-01T10:25:54.306Z",
+          "size": "850 KB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_554306",
+          "taskId": "tsk_554078",
+          "commenterId": "usr_ae_emp1",
+          "commenterName": "Sarah Chen",
+          "commenterRole": "EMPLOYEE",
+          "content": "Q3 Framework mapping completed. Attached full PDF outline.",
+          "createdAt": "2026-06-01T10:25:54.306Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_1780309554079_0",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Task created and assigned to Sarah Chen",
+          "timestamp": "2026-06-01T10:25:54.079Z"
+        },
+        {
+          "id": "act_554307_l3f",
+          "userId": "usr_ae_emp1",
+          "userName": "Sarah Chen",
+          "action": "Status updated from [PENDING] to [REVIEW]",
+          "timestamp": "2026-06-01T10:25:54.307Z"
+        }
+      ],
+      "createdAt": "2026-06-01T10:25:54.079Z"
+    },
+    {
+      "id": "tsk_559090",
+      "companyId": "co_aether",
+      "title": "Conduct System Performance Optimization MVP",
+      "description": "Verify end-to-end telemetry and ensure node resolves native DOMExceptions",
+      "assignedTo": "usr_ae_emp1",
+      "createdBy": "usr_ae_admin",
+      "deadline": "2026-06-15",
+      "priority": "HIGH",
+      "status": "IN_PROGRESS",
+      "progress": 40,
+      "recurringType": "NONE",
+      "isFutureScheduled": false,
+      "attachments": [
+        {
+          "name": "mvp_verification_report_2026.pdf",
+          "url": "https://ais-pre-yxyhfkk7xwnqoui2jgpots-389822732223.asia-east1.run.app/dev-attachment/mvp_verification_report_2026.pdf",
+          "uploadedBy": "Elena Rostova",
+          "uploadedAt": "2026-06-01T10:25:59.095Z",
+          "size": "1.2 MB"
+        }
+      ],
+      "comments": [
+        {
+          "id": "cmt_559095",
+          "taskId": "tsk_559090",
+          "commenterId": "usr_ae_admin",
+          "commenterName": "Elena Rostova",
+          "commenterRole": "ADMIN",
+          "content": "Verified node-domexception shimming works",
+          "createdAt": "2026-06-01T10:25:59.095Z"
+        }
+      ],
+      "activityLogs": [
+        {
+          "id": "act_1780309559090_0",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Task created and assigned to Sarah Chen",
+          "timestamp": "2026-06-01T10:25:59.090Z"
+        },
+        {
+          "id": "act_559095_4h9",
+          "userId": "usr_ae_admin",
+          "userName": "Elena Rostova",
+          "action": "Status updated from [PENDING] to [IN_PROGRESS]",
+          "timestamp": "2026-06-01T10:25:59.095Z"
+        }
+      ],
+      "createdAt": "2026-06-01T10:25:59.090Z"
     }
   ],
   "performanceScores": [
@@ -1010,6 +1123,36 @@
       "isRead": false,
       "type": "SYSTEM",
       "createdAt": "2026-06-01T08:51:15.566Z"
+    },
+    {
+      "id": "not_554079",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "New Task Assigned: Formulate Q3 Mission Statement Deliverables",
+      "message": "You have been assigned \"Formulate Q3 Mission Statement Deliverables\" by Elena Rostova. Finish target deadline is 9/30/2026.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-06-01T10:25:54.080Z"
+    },
+    {
+      "id": "not_554306",
+      "userId": "usr_ae_admin",
+      "companyId": "co_aether",
+      "title": "Task Status Alert: Formulate Q3 Mission Statement Deliverables",
+      "message": "Sarah Chen updated \"Formulate Q3 Mission Statement Deliverables\" to REVIEW.",
+      "isRead": false,
+      "type": "SYSTEM",
+      "createdAt": "2026-06-01T10:25:54.306Z"
+    },
+    {
+      "id": "not_559091",
+      "userId": "usr_ae_emp1",
+      "companyId": "co_aether",
+      "title": "New Task Assigned: Conduct System Performance Optimization MVP",
+      "message": "You have been assigned \"Conduct System Performance Optimization MVP\" by Elena Rostova. Finish target deadline is 6/15/2026.",
+      "isRead": false,
+      "type": "TASK_ASSIGNED",
+      "createdAt": "2026-06-01T10:25:59.091Z"
     }
   ]
 }
